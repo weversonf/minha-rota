@@ -1,153 +1,46 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="theme-color" content="#121212">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <title>Minha Rota v22 - Tangram 3D</title>
-    
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://unpkg.com/tangram/dist/tangram.min.js"></script>
-
-    <style>
-        :root { --cor-principal: #e74c3c; --cor-fundo: #121212; --cor-ui: #1e1e1e; }
-        body { margin: 0; padding: 0; background: var(--cor-fundo); font-family: 'Segoe UI', sans-serif; overflow: hidden; }
-        
-        /* Header Fixo v22 */
-        #header-app { position: fixed; top: 0; left: 0; width: 100%; height: 60px; background: #1a1a1a; z-index: 1000; display: none; align-items: center; justify-content: space-between; padding: 0 15px; box-sizing: border-box; border-bottom: 2px solid var(--cor-principal); }
-        #header-app h1 { font-size: 18px; color: white; margin: 0; font-weight: 800; letter-spacing: 1px; }
-
-        /* Mapa Tangram */
-        #map { position: absolute; top: 60px; bottom: 0; width: 100%; z-index: 1; display: none; }
-
-        /* Interface de Busca */
-        #nav-header { position: fixed; top: 70px; left: 10px; right: 10px; z-index: 500; display: none; }
-        .search-container { background: rgba(30, 30, 30, 0.9); border-radius: 12px; border: 1px solid #444; position: relative; overflow: hidden; }
-        .search-input { width: 100%; background: transparent; border: none; padding: 15px; color: white; font-size: 16px; outline: none; }
-        .suggestions { position: absolute; top: 100%; left: 0; width: 100%; background: #1a1a1a; display: none; max-height: 250px; overflow-y: auto; }
-        .suggestion-item { padding: 12px; border-bottom: 1px solid #333; color: #ccc; cursor: pointer; font-size: 14px; }
-
-        /* Sidebar */
-        #sidebar { position: fixed; top: 0; left: -320px; width: 300px; height: 100%; background: #1a1a1a; z-index: 2000; transition: 0.4s; padding: 80px 20px 20px; box-sizing: border-box; border-right: 1px solid #333; }
-        #sidebar.active { left: 0; }
-        select, input { width: 100%; padding: 12px; margin-bottom: 15px; background: #2c2c2c; border: 1px solid #444; color: white; border-radius: 8px; }
-
-        #login-screen { position: fixed; width: 100%; height: 100%; background: var(--cor-fundo); z-index: 5000; display: flex; align-items: center; justify-content: center; flex-direction: column; }
-        .btn-acao { width: 100%; padding: 16px; border-radius: 14px; border: none; font-weight: bold; font-size: 16px; cursor: pointer; }
-    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minha Rota PWA</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="styles.css">
+    <script src="app.js" defer></script>
 </head>
 <body>
-
-<div id="login-screen">
-    <div style="text-align: center; width: 85%;">
-        <h1 style="color: white; margin-bottom: 30px;">Minha Rota v22</h1>
-        <input type="password" id="pass" placeholder="Senha do Grupo" style="text-align: center;">
-        <button onclick="App.entrar()" class="btn-acao" style="background: var(--cor-principal); color: white;">ACESSAR SISTEMA</button>
-        <button id="btn-install" class="btn-acao" style="background: #34495e; color: white; margin-top: 15px; display: none;">📲 INSTALAR APP</button>
-    </div>
-</div>
-
-<header id="header-app">
-    <button onclick="App.toggleMenu()" style="background:none; border:none; color:white; font-size:24px;">☰</button>
-    <h1>MINHA ROTA 3D</h1>
-    <button onclick="App.sos()" style="background:none; border:none; font-size:20px;">🆘</button>
-</header>
-
-<div id="sidebar">
-    <h3 style="color: var(--cor-principal);">Veículo</h3>
-    <label style="color:#888; font-size:10px;">CONSUMO MÉDIO (km/L)</label>
-    <input type="number" id="consumo" value="29">
-    <button class="btn-acao" style="background: #27ae60; color: white;" onclick="App.toggleMenu()">SALVAR</button>
-</div>
-
-<div id="nav-header">
-    <div class="search-container">
-        <input type="text" class="search-input" placeholder="Para onde vamos?" oninput="App.buscar(this.value)">
-        <div id="suggestions" class="suggestions"></div>
-    </div>
-</div>
-
-<div id="map"></div>
-
-<script>
-    // Registro SW e PWA
-    let deferredPrompt;
-    window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferredPrompt = e; document.getElementById('btn-install').style.display = 'block'; });
-    document.getElementById('btn-install').addEventListener('click', () => { if(deferredPrompt) deferredPrompt.prompt(); });
-
-    const App = {
-        map: null,
-        scene: null,
-        userLoc: [-3.7319, -38.5267],
-
-        entrar() {
-            if(document.getElementById('pass').value === 'FZ25-FOR') {
-                document.getElementById('login-screen').style.display = 'none';
-                document.getElementById('header-app').style.display = 'flex';
-                document.getElementById('nav-header').style.display = 'block';
-                document.getElementById('map').style.display = 'block';
-                this.initMapa();
-            }
-        },
-
-        initMapa() {
-            // Inicializa Leaflet
-            this.map = L.map('map', { zoomControl: false }).setView(this.userLoc, 16);
-
-            // Carrega a Camada Tangram (Visual 3D)
-            // Usamos o estilo 'Cinnabar' da Nextzen que é muito bonito para navegação
-            this.scene = Tangram.leafletLayer({
-                scene: 'https://www.nextzen.org/carto/cinnabar-style/cinnabar-style.yaml',
-                attribution: 'Nextzen, OSM'
-            }).addTo(this.map);
-
-            // Simulação de inclinação (Pitch) para efeito 3D
-            // Como Leaflet nativo não inclina, o Tangram simula nos tiles
-            this.map.on('zoomend', () => {
-                if(this.map.getZoom() > 15) {
-                    this.scene.scene.config.layers.buildings.visible = true;
-                }
-            });
-
-            navigator.geolocation.getCurrentPosition(p => {
-                const pos = [p.coords.latitude, p.coords.longitude];
-                this.map.setView(pos, 16);
-                L.marker(pos, { icon: L.divIcon({ className: 'seta-veiculo', html: '▲', iconSize: [20, 20] }) }).addTo(this.map);
-            });
-        },
-
-        async buscar(query) {
-            if (query.length < 3) return;
-            const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${query}, Fortaleza&limit=5`);
-            const data = await res.json();
-            const container = document.getElementById('suggestions');
-            container.innerHTML = '';
-            container.style.display = 'block';
-            
-            data.forEach(item => {
-                const div = document.createElement('div');
-                div.className = 'suggestion-item';
-                div.innerText = item.display_name;
-                div.onclick = () => {
-                    const coords = [parseFloat(item.lat), parseFloat(item.lon)];
-                    this.map.flyTo(coords, 17);
-                    container.style.display = 'none';
-                };
-                container.appendChild(div);
-            });
-        },
-
-        toggleMenu() { document.getElementById('sidebar').classList.toggle('active'); },
-        sos() { window.open(`https://wa.me/?text=Emergencia! Localização: http://maps.google.com/maps?q=${this.userLoc[0]},${this.userLoc[1]}`); }
-    };
-</script>
-
-<style>
-    /* Seta estilo navegação */
-    .seta-veiculo { color: #3498db; font-size: 24px; text-shadow: 0 0 10px #3498db; transform-origin: center; }
-</style>
-
+    <header>
+        <h1>Minha Rota</h1>
+        <nav>
+            <ul>
+                <li><a href="#map">Map</a></li>
+                <li><a href="#crime">Crime Data</a></li>
+                <li><a href="#fuel">Fuel Calculator</a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <section id="map">
+            <h2>Map Integration</h2>
+            <div id="mapContainer">
+                <!-- Map will be embedded here -->
+            </div>
+        </section>
+        <section id="crime">
+            <h2>Crime Data Display</h2>
+            <div id="crimeData">
+                <!-- Crime data will be displayed here -->
+            </div>
+        </section>
+        <section id="fuel">
+            <h2>Fuel Calculator</h2>
+            <div id="fuelCalculator">
+                <!-- Fuel calculator will go here -->
+            </div>
+        </section>
+    </main>
+    <footer>
+        <p>&copy; 2026 Minha Rota. All rights reserved.</p>
+    </footer>
 </body>
 </html>
