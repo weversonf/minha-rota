@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Minha Rota v11 - Inteligência de Dados</title>
+    <title>Minha Rota v11</title>
     <script src="https://api.mapbox.com/mapbox-gl-js/v3.0.1/mapbox-gl.js"></script>
     <link href="https://api.mapbox.com/mapbox-gl-js/v3.0.1/mapbox-gl.css" rel="stylesheet" />
     <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.0.0/mapbox-gl-geocoder.min.js"></script>
@@ -19,18 +19,17 @@
         #sidebar.active { left: 0; }
         #info-card { position: fixed; bottom: 25px; left: 5%; width: 90%; background: white; padding: 20px; border-radius: 20px; display: none; z-index: 50; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         .valor-gasto { color: #27ae60; font-size: 24px; font-weight: bold; }
-        #btn-ir { background: #27ae60; color: white; border: none; padding: 15px; border-radius: 12px; width: 100%; font-weight: bold; margin-top: 10px; }
-        #login-screen { position: fixed; width: 100%; height: 100%; background: var(--cor-fundo); display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; z-index: 200; }
+        #login-screen { position: fixed; width: 100%; height: 100%; background: var(--cor-fundo); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 200; }
+        .btn-acao { padding: 15px; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; width: 100%; margin-top: 10px; }
     </style>
 </head>
 <body>
 
 <div id="login-screen">
-    <div style="text-align: center; width: 85%;">
+    <div style="text-align: center; width: 85%; color: white;">
         <h1>Minha Rota v11</h1>
-        <p style="color: #666; margin-bottom: 20px;">Análise CVP/Furto - FZ25</p>
-        <input type="password" id="group-key" placeholder="Chave do Grupo" style="padding: 18px; border-radius: 12px; width: 100%; background: #1e1e1e; color: white; text-align: center; border: 1px solid #333; margin-bottom: 15px;">
-        <button onclick="checkKey()" style="padding: 18px; background: var(--cor-principal); color: white; border: none; border-radius: 12px; font-weight: bold; width: 100%;">ACESSAR</button>
+        <input type="password" id="group-key" placeholder="Senha FZ25" style="padding: 18px; border-radius: 12px; width: 100%; background: #1e1e1e; color: white; text-align: center; border: 1px solid #333; margin-bottom: 15px;">
+        <button onclick="checkKey()" class="btn-acao" style="background: var(--cor-principal); color: white;">ENTRAR</button>
     </div>
 </div>
 
@@ -39,24 +38,23 @@
 
 <div id="sidebar">
     <h3>Configurações</h3>
-    <label style="font-size: 12px; color: #888;">Consumo Fazer 250 (km/L)</label>
-    <input type="number" id="v-consumo" value="29" style="width:100%; padding:10px; margin-bottom:15px; background:#2c2c2c; color:white; border:none;">
-    <label style="font-size: 12px; color: #888;">Preço Gasolina (R$)</label>
-    <input type="number" step="0.01" id="v-preco" value="6.15" style="width:100%; padding:10px; margin-bottom:20px; background:#2c2c2c; color:white; border:none;">
-    <button onclick="saveConfigs()" style="background:#27ae60; color:white; border:none; width:100%; padding:12px; border-radius:8px; font-weight:bold;">SALVAR</button>
-    <br><br>
-    <button onclick="logout()" style="background:none; border:1px solid #e74c3c; color:#e74c3c; width:100%; padding:10px; border-radius:8px;">SAIR</button>
+    <label>Consumo (km/L)</label>
+    <input type="number" id="v-consumo" value="29" style="width:100%; padding:8px; margin-bottom:15px;">
+    <label>Preço Gasolina</label>
+    <input type="number" step="0.01" id="v-preco" value="6.15" style="width:100%; padding:8px; margin-bottom:15px;">
+    <button onclick="saveConfigs()" class="btn-acao" style="background:#27ae60; color:white;">SALVAR</button>
+    <button onclick="logout()" class="btn-acao" style="background:transparent; color:#e74c3c; border:1px solid #e74c3c;">SAIR</button>
 </div>
 
 <div id="map"></div>
 
 <div id="info-card">
     <div style="display: flex; justify-content: space-between;">
-        <div id="rota-distancia" style="font-weight: bold; color: #333;">Calculando rota...</div>
+        <div id="rota-distancia" style="font-weight: bold; color: #333;">Calculando...</div>
         <button onclick="document.getElementById('info-card').style.display='none'" style="border: none; background: none; font-size: 20px;">×</button>
     </div>
     <div id="gasto-estimado" class="valor-gasto">R$ 0,00</div>
-    <button id="btn-ir" onclick="ativarGPSInterno()">INICIAR GPS</button>
+    <button id="btn-ir" class="btn-acao" style="background: #27ae60; color: white;" onclick="iniciarGPS()">INICIAR GPS</button>
 </div>
 
 <script>
@@ -64,29 +62,34 @@
         token: 'pk.eyJ1Ijoid2V2ZXJzb25mIiwiYSI6ImNtbHF5bmh1YTA0djgzZHB4dTJpaG9rbHgifQ.jo3DG631F030AxG_nFKVEQ',
         chaveAcesso: 'FZ25-FOR',
         centro: [-38.5267, -3.7319],
-        urlBairros: 'https://raw.githubusercontent.com/mapaslivres/municipios-br/master/ce/fortaleza/bairros.json'
+        // GeoJSON alternativo com nomes padronizados
+        urlBairros: 'https://raw.githubusercontent.com/fititnt/gis-dataset-brasil/master/municipio/ce/fortaleza/bairros.geojson'
     };
 
-    // Mapeamento de Risco baseado nas AIS com maiores índices nos seus arquivos (CVP/Furto)
+    // Nomes baseados no padrão do GeoJSON oficial de Fortaleza
     const RISCO_BAIRROS = {
-        'Centro': '#ff0000', 'Barra do Ceará': '#ff0000', 'Messejana': '#ff0000',
-        'Jangurussu': '#ff0000', 'Bom Jardim': '#ff0000', 'Parangaba': '#ffa500',
-        'Antônio Bezerra': '#ffa500', 'Passaré': '#ffa500', 'Vila Velha': '#ff0000'
+        'CENTRO': '#ff0000',
+        'MESSEJANA': '#ff0000',
+        'JANGURUSSU': '#ff0000',
+        'BARRA DO CEARÁ': '#ff0000',
+        'BOM JARDIM': '#ff0000',
+        'PARANGABA': '#ffa500',
+        'PASSARÉ': '#ffa500',
+        'ALDEOTA': '#ffa500'
     };
 
-    let userLocation = CONFIG.centro;
-    let map, destinoAtual = null;
+    let map, userLocation = CONFIG.centro;
 
-    window.onload = function() {
-        if (localStorage.getItem('minha_rota_key') === CONFIG.chaveAcesso) { iniciarApp(); }
-        if (localStorage.getItem('v_consumo')) document.getElementById('v-consumo').value = localStorage.getItem('v_consumo');
+    window.onload = () => {
+        if (localStorage.getItem('minha_rota_key') === CONFIG.chaveAcesso) iniciarApp();
+        carregarConfig();
     };
 
     function checkKey() {
         if(document.getElementById('group-key').value === CONFIG.chaveAcesso) {
             localStorage.setItem('minha_rota_key', CONFIG.chaveAcesso);
             iniciarApp();
-        } else { alert('Chave incorreta!'); }
+        } else { alert('Erro!'); }
     }
 
     function iniciarApp() {
@@ -103,63 +106,70 @@
         localStorage.setItem('v_preco', document.getElementById('v-preco').value);
         location.reload();
     }
+    function carregarConfig() {
+        if(localStorage.getItem('v_consumo')) document.getElementById('v-consumo').value = localStorage.getItem('v_consumo');
+        if(localStorage.getItem('v_preco')) document.getElementById('v-preco').value = localStorage.getItem('v_preco');
+    }
     function logout() { localStorage.clear(); location.reload(); }
 
     function dispararSOS() {
-        const msg = encodeURIComponent(`🚨 SOS FZ25! Localização atual: https://www.google.com/maps?q=${userLocation[1]},${userLocation[0]}`);
+        const msg = encodeURIComponent(`🚨 SOS! Localização: https://www.google.com/maps?q=${userLocation[1]},${userLocation[0]}`);
         window.open(`https://wa.me/?text=${msg}`);
     }
 
-    function ativarGPSInterno() {
-        map.easeTo({ zoom: 16, pitch: 45, duration: 1000 });
+    function iniciarGPS() {
+        map.easeTo({ zoom: 16, pitch: 50 });
         document.getElementById('info-card').style.display = 'none';
-        alert("GPS Ativado. Mantenha o app aberto para alertas de voz.");
+        window.speechSynthesis.speak(new SpeechSynthesisUtterance("Navegação iniciada. Fique atento às zonas de risco."));
     }
 
     function initMap() {
         mapboxgl.accessToken = CONFIG.token;
-        map = new mapboxgl.Map({ container: 'map', style: 'mapbox://styles/mapbox/dark-v11', center: CONFIG.centro, zoom: 12 });
+        map = new mapboxgl.Map({ container: 'map', style: 'mapbox://styles/mapbox/dark-v11', center: CONFIG.centro, zoom: 11 });
 
         const geocoder = new MapboxGeocoder({ accessToken: mapboxgl.accessToken, mapboxgl: mapboxgl, placeholder: 'Destino...', countries: 'br' });
         map.addControl(geocoder);
         
-        const geolocate = new mapboxgl.GeolocateControl({ positionOptions: { enableHighAccuracy: true }, trackUserLocation: true, showUserHeading: true });
+        const geolocate = new mapboxgl.GeolocateControl({ trackUserLocation: true, showUserHeading: true });
         map.addControl(geolocate, 'bottom-right');
 
         geolocate.on('geolocate', (e) => {
             userLocation = [e.coords.longitude, e.coords.latitude];
-            
-            // Verificação de Risco por Voz
             const features = map.queryRenderedFeatures(map.project(userLocation), { layers: ['camada-bairros'] });
             if (features.length > 0) {
-                const bairro = features[0].properties.nome;
-                if (RISCO_BAIRROS[bairro]) {
-                    window.speechSynthesis.speak(new SpeechSynthesisUtterance(`Atenção Weverson, zona de risco: ${bairro}`));
+                const b = features[0].properties.nome.toUpperCase();
+                if (RISCO_BAIRROS[b]) {
+                    window.speechSynthesis.speak(new SpeechSynthesisUtterance(`Alerta: Bairro ${b} é zona de risco.`));
                 }
             }
         });
 
         map.on('load', () => {
-            map.addSource('fortaleza-bairros', { type: 'geojson', data: CONFIG.urlBairros });
+            map.addSource('bairros-src', { type: 'geojson', data: CONFIG.urlBairros });
+            
             map.addLayer({
-                'id': 'camada-bairros', 'type': 'fill', 'source': 'fortaleza-bairros',
-                'paint': { 'fill-color': ['match', ['get', 'nome'], ...Object.entries(RISCO_BAIRROS).flat(), 'transparent'], 'fill-opacity': 0.4 }
+                'id': 'camada-bairros', 'type': 'fill', 'source': 'bairros-src',
+                'paint': {
+                    'fill-color': ['match', ['upcase', ['get', 'nome']], ...Object.entries(RISCO_BAIRROS).flat(), 'transparent'],
+                    'fill-opacity': 0.5
+                }
             });
 
+            map.addLayer({ 'id': 'contorno', 'type': 'line', 'source': 'bairros-src', 'paint': { 'line-color': '#fff', 'line-width': 0.2 } });
+
             map.addSource('route', { 'type': 'geojson', 'data': { 'type': 'Feature', 'geometry': { 'type': 'LineString', 'coordinates': [] } } });
-            map.addLayer({ 'id': 'route-line', 'type': 'line', 'source': 'route', 'paint': { 'line-color': '#3498db', 'line-width': 7 } });
+            map.addLayer({ 'id': 'route-line', 'type': 'line', 'source': 'route', 'paint': { 'line-color': '#3498db', 'line-width': 6 } });
         });
 
-        const calc = async (coords) => {
-            destinoAtual = [coords.lng || coords[0], coords.lat || coords[1]];
-            const res = await fetch(`https://api.mapbox.com/directions/v5/mapbox/driving/${userLocation[0]},${userLocation[1]};${destinoAtual[0]},${destinoAtual[1]}?geometries=geojson&access_token=${CONFIG.token}`);
+        const calc = async (c) => {
+            const res = await fetch(`https://api.mapbox.com/directions/v5/mapbox/driving/${userLocation[0]},${userLocation[1]};${c.lng || c[0]},${c.lat || c[1]}?geometries=geojson&access_token=${CONFIG.token}`);
             const j = await res.json();
             if(j.routes && j.routes[0]) {
                 map.getSource('route').setData({ 'type': 'Feature', 'geometry': j.routes[0].geometry });
                 const d = (j.routes[0].distance/1000).toFixed(1);
                 const custo = (d / document.getElementById('v-consumo').value) * document.getElementById('v-preco').value;
                 document.getElementById('info-card').style.display = 'block';
-                document.getElementById('rota-distancia').innerText = d + ' km reais';
+                document.getElementById('rota-distancia').innerText = d + ' km';
                 document.getElementById('gasto-estimado').innerText = 'R$ ' + custo.toFixed(2);
             }
         };
