@@ -5,117 +5,122 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#121212">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Minha Rota v22 - OpenSearch Edition</title>
+    <title>Minha Rota v22 - Tangram 3D</title>
     
-    <link rel="manifest" href='data:application/manifest+json,{"name":"Minha Rota GPS","short_name":"MinhaRota","start_url":"index.html","display":"standalone","background_color":"#121212","theme_color":"#e74c3c","icons":[{"src":"https://cdn-icons-png.flaticon.com/512/1673/1673273.png","sizes":"512x512","type":"image/png"}]}'>
-
-    <script src="https://api.mapbox.com/mapbox-gl-js/v3.0.1/mapbox-gl.js"></script>
-    <link href="https://api.mapbox.com/mapbox-gl-js/v3.0.1/mapbox-gl.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/tangram/dist/tangram.min.js"></script>
 
     <style>
-        :root { --cor-principal: #e74c3c; --cor-fundo: #121212; --cor-ui: rgba(30, 30, 30, 0.98); --cor-sucesso: #2ecc71; }
-        body { margin: 0; padding: 0; background: var(--cor-fundo); font-family: 'Segoe UI', sans-serif; overflow: hidden; color: white; }
+        :root { --cor-principal: #e74c3c; --cor-fundo: #121212; --cor-ui: #1e1e1e; }
+        body { margin: 0; padding: 0; background: var(--cor-fundo); font-family: 'Segoe UI', sans-serif; overflow: hidden; }
         
-        #app-header { position: fixed; top: 0; left: 0; width: 100%; height: 60px; background: #1a1a1a; z-index: 300; display: none; align-items: center; justify-content: space-between; padding: 0 15px; box-sizing: border-box; border-bottom: 1px solid #333; }
-        #app-header h1 { font-size: 16px; margin: 0; color: var(--cor-principal); font-weight: 800; }
-        
-        #map { position: absolute; top: 60px; bottom: 0; width: 100%; display: none; }
-        
-        /* BUSCA CUSTOMIZADA (ESTILO GOOGLE MAPS) */
-        #nav-header { position: fixed; top: 70px; left: 10px; right: 10px; z-index: 200; display: none; flex-direction: column; gap: 8px; }
-        .search-container { background: var(--cor-ui); border-radius: 12px; border: 1px solid #444; position: relative; }
-        .search-input { width: 100%; background: transparent; border: none; padding: 15px; color: white; font-size: 16px; box-sizing: border-box; outline: none; }
-        .suggestions { position: absolute; top: 100%; left: 0; width: 100%; background: #1a1a1a; border: 1px solid #444; border-top: none; display: none; max-height: 200px; overflow-y: auto; border-radius: 0 0 12px 12px; }
-        .suggestion-item { padding: 12px; border-bottom: 1px solid #333; cursor: pointer; font-size: 14px; }
-        .suggestion-item:last-child { border: none; }
+        /* Header Fixo v22 */
+        #header-app { position: fixed; top: 0; left: 0; width: 100%; height: 60px; background: #1a1a1a; z-index: 1000; display: none; align-items: center; justify-content: space-between; padding: 0 15px; box-sizing: border-box; border-bottom: 2px solid var(--cor-principal); }
+        #header-app h1 { font-size: 18px; color: white; margin: 0; font-weight: 800; letter-spacing: 1px; }
 
-        /* Sidebar, Status, Seta e Botões permanecem os mesmos da v21 */
-        #sidebar { position: fixed; top: 0; left: -320px; width: 300px; height: 100%; background: #1a1a1a; z-index: 400; transition: 0.4s; padding: 25px; box-sizing: border-box; padding-top: 80px; border-right: 1px solid #333; }
+        /* Mapa Tangram */
+        #map { position: absolute; top: 60px; bottom: 0; width: 100%; z-index: 1; display: none; }
+
+        /* Interface de Busca */
+        #nav-header { position: fixed; top: 70px; left: 10px; right: 10px; z-index: 500; display: none; }
+        .search-container { background: rgba(30, 30, 30, 0.9); border-radius: 12px; border: 1px solid #444; position: relative; overflow: hidden; }
+        .search-input { width: 100%; background: transparent; border: none; padding: 15px; color: white; font-size: 16px; outline: none; }
+        .suggestions { position: absolute; top: 100%; left: 0; width: 100%; background: #1a1a1a; display: none; max-height: 250px; overflow-y: auto; }
+        .suggestion-item { padding: 12px; border-bottom: 1px solid #333; color: #ccc; cursor: pointer; font-size: 14px; }
+
+        /* Sidebar */
+        #sidebar { position: fixed; top: 0; left: -320px; width: 300px; height: 100%; background: #1a1a1a; z-index: 2000; transition: 0.4s; padding: 80px 20px 20px; box-sizing: border-box; border-right: 1px solid #333; }
         #sidebar.active { left: 0; }
-        #status-bar { position: fixed; bottom: 0; left: 0; width: 100%; background: var(--cor-ui); padding: 15px; z-index: 150; display: none; justify-content: space-around; border-top: 1px solid #333; }
-        .stat-val { display: block; font-size: 20px; font-weight: 800; color: var(--cor-sucesso); }
-        .seta-veiculo { width: 0; height: 0; border-left: 10px solid transparent; border-right: 10px solid transparent; border-bottom: 30px solid #3498db; filter: drop-shadow(0 0 5px #3498db); }
-        #btn-start { background: var(--cor-principal); color: white; border: none; padding: 18px 40px; border-radius: 35px; font-weight: bold; position: fixed; bottom: 110px; right: 15px; z-index: 150; display: none; cursor: pointer; }
-        #login-screen { position: fixed; width: 100%; height: 100%; background: var(--cor-fundo); display: flex; align-items: center; justify-content: center; z-index: 500; flex-direction: column; }
+        select, input { width: 100%; padding: 12px; margin-bottom: 15px; background: #2c2c2c; border: 1px solid #444; color: white; border-radius: 8px; }
+
+        #login-screen { position: fixed; width: 100%; height: 100%; background: var(--cor-fundo); z-index: 5000; display: flex; align-items: center; justify-content: center; flex-direction: column; }
+        .btn-acao { width: 100%; padding: 16px; border-radius: 14px; border: none; font-weight: bold; font-size: 16px; cursor: pointer; }
     </style>
 </head>
 <body>
 
 <div id="login-screen">
     <div style="text-align: center; width: 85%;">
-        <h1>Minha Rota v22</h1>
-        <input type="password" id="group-key" placeholder="Senha FZ25" style="width: 100%; text-align: center; padding: 18px; border-radius: 12px; background: #1e1e1e; border: 1px solid #333; color: white; margin-bottom: 15px;">
-        <button onclick="App.autenticar()" style="width: 100%; padding: 18px; border-radius: 12px; background: var(--cor-principal); color: white; border: none; font-weight: bold;">ENTRAR</button>
-        <button id="btnInstall" style="width: 100%; padding: 15px; border-radius: 12px; background: #34495e; color: white; border: none; margin-top: 15px; display: none;">📲 INSTALAR APP</button>
+        <h1 style="color: white; margin-bottom: 30px;">Minha Rota v22</h1>
+        <input type="password" id="pass" placeholder="Senha do Grupo" style="text-align: center;">
+        <button onclick="App.entrar()" class="btn-acao" style="background: var(--cor-principal); color: white;">ACESSAR SISTEMA</button>
+        <button id="btn-install" class="btn-acao" style="background: #34495e; color: white; margin-top: 15px; display: none;">📲 INSTALAR APP</button>
     </div>
 </div>
 
-<header id="app-header">
+<header id="header-app">
     <button onclick="App.toggleMenu()" style="background:none; border:none; color:white; font-size:24px;">☰</button>
-    <h1>MINHA ROTA</h1>
+    <h1>MINHA ROTA 3D</h1>
     <button onclick="App.sos()" style="background:none; border:none; font-size:20px;">🆘</button>
 </header>
 
 <div id="sidebar">
-    <h3 style="color: var(--cor-principal);">Configuração</h3>
-    <label>Consumo (km/L)</label>
-    <input type="number" id="v-consumo" value="29">
-    <button onclick="App.salvarConfig()" style="width: 100%; padding: 15px; background: var(--cor-sucesso); border: none; color: white; border-radius: 12px; font-weight: bold;">SALVAR</button>
+    <h3 style="color: var(--cor-principal);">Veículo</h3>
+    <label style="color:#888; font-size:10px;">CONSUMO MÉDIO (km/L)</label>
+    <input type="number" id="consumo" value="29">
+    <button class="btn-acao" style="background: #27ae60; color: white;" onclick="App.toggleMenu()">SALVAR</button>
 </div>
 
 <div id="nav-header">
     <div class="search-container">
-        <input type="text" id="input-destino" class="search-input" placeholder="Para onde vamos em Fortaleza?" oninput="App.buscarEndereco(this.value)">
+        <input type="text" class="search-input" placeholder="Para onde vamos?" oninput="App.buscar(this.value)">
         <div id="suggestions" class="suggestions"></div>
     </div>
-</div>
-
-<button id="btn-start" onclick="App.iniciarNavegacao()">IR AGORA</button>
-
-<div id="status-bar">
-    <div class="stat-item"><span id="val-tempo" class="stat-val">--</span><span class="stat-lab">Min</span></div>
-    <div class="stat-item"><span id="val-custo" class="stat-val">--</span><span class="stat-lab">Custo</span></div>
-    <div class="stat-item"><span id="val-dist" class="stat-val">--</span><span class="stat-lab">KM</span></div>
 </div>
 
 <div id="map"></div>
 
 <script>
-    if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js');
+    // Registro SW e PWA
+    let deferredPrompt;
+    window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferredPrompt = e; document.getElementById('btn-install').style.display = 'block'; });
+    document.getElementById('btn-install').addEventListener('click', () => { if(deferredPrompt) deferredPrompt.prompt(); });
 
     const App = {
-        map: null, marker: null, userLoc: [-38.5267, -3.7319], modoGPS: false, destino: null,
+        map: null,
+        scene: null,
+        userLoc: [-3.7319, -38.5267],
 
-        autenticar() {
-            if (document.getElementById('group-key').value === 'FZ25-FOR') {
+        entrar() {
+            if(document.getElementById('pass').value === 'FZ25-FOR') {
                 document.getElementById('login-screen').style.display = 'none';
-                document.getElementById('app-header').style.display = 'flex';
+                document.getElementById('header-app').style.display = 'flex';
+                document.getElementById('nav-header').style.display = 'block';
                 document.getElementById('map').style.display = 'block';
-                document.getElementById('nav-header').style.display = 'flex';
                 this.initMapa();
             }
         },
 
         initMapa() {
-            mapboxgl.accessToken = 'pk.eyJ1Ijoid2V2ZXJzb25mIiwiYSI6ImNtbHF5bmh1YTA0djgzZHB4dTJpaG9rbHgifQ.jo3DG631F030AxG_nFKVEQ';
-            this.map = new mapboxgl.Map({ container: 'map', style: 'mapbox://styles/mapbox/dark-v11', center: this.userLoc, zoom: 12 });
-            const el = document.createElement('div'); el.className = 'seta-veiculo';
-            this.marker = new mapboxgl.Marker(el).setLngLat(this.userLoc).addTo(this.map);
+            // Inicializa Leaflet
+            this.map = L.map('map', { zoomControl: false }).setView(this.userLoc, 16);
 
-            navigator.geolocation.watchPosition(p => {
-                const pos = [p.coords.longitude, p.coords.latitude];
-                this.userLoc = pos;
-                this.marker.setLngLat(pos);
-                if(this.modoGPS) this.map.easeTo({ center: pos, bearing: p.coords.heading || 0, duration: 1000 });
-            }, null, { enableHighAccuracy: true });
+            // Carrega a Camada Tangram (Visual 3D)
+            // Usamos o estilo 'Cinnabar' da Nextzen que é muito bonito para navegação
+            this.scene = Tangram.leafletLayer({
+                scene: 'https://www.nextzen.org/carto/cinnabar-style/cinnabar-style.yaml',
+                attribution: 'Nextzen, OSM'
+            }).addTo(this.map);
+
+            // Simulação de inclinação (Pitch) para efeito 3D
+            // Como Leaflet nativo não inclina, o Tangram simula nos tiles
+            this.map.on('zoomend', () => {
+                if(this.map.getZoom() > 15) {
+                    this.scene.scene.config.layers.buildings.visible = true;
+                }
+            });
+
+            navigator.geolocation.getCurrentPosition(p => {
+                const pos = [p.coords.latitude, p.coords.longitude];
+                this.map.setView(pos, 16);
+                L.marker(pos, { icon: L.divIcon({ className: 'seta-veiculo', html: '▲', iconSize: [20, 20] }) }).addTo(this.map);
+            });
         },
 
-        // NOVO MOTOR DE BUSCA (NOMINATIM / OPENSTREETMAP)
-        async buscarEndereco(query) {
+        async buscar(query) {
             if (query.length < 3) return;
-            const url = `https://nominatim.openstreetmap.org/search?format=json&q=${query}, Fortaleza&limit=5`;
-            const res = await fetch(url);
+            const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${query}, Fortaleza&limit=5`);
             const data = await res.json();
             const container = document.getElementById('suggestions');
             container.innerHTML = '';
@@ -126,44 +131,23 @@
                 div.className = 'suggestion-item';
                 div.innerText = item.display_name;
                 div.onclick = () => {
-                    this.destino = [parseFloat(item.lon), parseFloat(item.lat)];
-                    document.getElementById('input-destino').value = item.display_name;
+                    const coords = [parseFloat(item.lat), parseFloat(item.lon)];
+                    this.map.flyTo(coords, 17);
                     container.style.display = 'none';
-                    this.tracar();
                 };
                 container.appendChild(div);
             });
         },
 
-        async tracar() {
-            if (!this.destino) return;
-            const res = await fetch(`https://api.mapbox.com/directions/v5/mapbox/driving/${this.userLoc[0]},${this.userLoc[1]};${this.destino[0]},${this.destino[1]}?geometries=geojson&access_token=${mapboxgl.accessToken}`);
-            const data = await res.json();
-            if(data.routes && data.routes[0]) {
-                const r = data.routes[0];
-                if(this.map.getSource('route')) { this.map.removeLayer('route-line'); this.map.removeSource('route'); }
-                this.map.addSource('route', { type: 'geojson', data: { type: 'Feature', geometry: r.geometry } });
-                this.map.addLayer({ id: 'route-line', type: 'line', source: 'route', paint: { 'line-color': '#3498db', 'line-width': 8 } });
-                
-                document.getElementById('val-tempo').innerText = Math.round(r.duration/60);
-                document.getElementById('val-dist').innerText = (r.distance/1000).toFixed(1);
-                document.getElementById('val-custo').innerText = "R$ " + ((r.distance/1000 / document.getElementById('v-consumo').value) * 6.15).toFixed(2);
-                document.getElementById('btn-start').style.display = 'block';
-                document.getElementById('status-bar').style.display = 'flex';
-            }
-        },
-
-        iniciarNavegacao() {
-            this.modoGPS = true;
-            document.getElementById('nav-header').style.display = 'none';
-            document.getElementById('btn-start').style.display = 'none';
-            this.map.flyTo({ center: this.userLoc, zoom: 18, pitch: 60 });
-        },
-
-        sos() { window.open(`https://wa.me/?text=SOS! Localização: http://maps.google.com/maps?q=${this.userLoc[1]},${this.userLoc[0]}`); },
         toggleMenu() { document.getElementById('sidebar').classList.toggle('active'); },
-        salvarConfig() { this.toggleMenu(); alert("Salvo!"); }
+        sos() { window.open(`https://wa.me/?text=Emergencia! Localização: http://maps.google.com/maps?q=${this.userLoc[0]},${this.userLoc[1]}`); }
     };
 </script>
+
+<style>
+    /* Seta estilo navegação */
+    .seta-veiculo { color: #3498db; font-size: 24px; text-shadow: 0 0 10px #3498db; transform-origin: center; }
+</style>
+
 </body>
 </html>
