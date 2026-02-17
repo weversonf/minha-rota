@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#121212">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Minha Rota </title>
+    <title>Minha Rota v21 - Navegação Real</title>
     
     <link rel="manifest" href='data:application/manifest+json,{"name":"Minha Rota GPS","short_name":"MinhaRota","start_url":"index.html","display":"standalone","background_color":"#121212","theme_color":"#e74c3c","icons":[{"src":"https://cdn-icons-png.flaticon.com/512/1673/1673273.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}]}'>
 
@@ -16,27 +16,34 @@
     <link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.0.0/mapbox-gl-geocoder.css" type="text/css">
 
     <style>
-        :root { --cor-principal: #e74c3c; --cor-fundo: #121212; --cor-ui: rgba(30, 30, 30, 0.95); --cor-sucesso: #2ecc71; }
+        :root { --cor-principal: #e74c3c; --cor-fundo: #121212; --cor-ui: rgba(30, 30, 30, 0.98); --cor-sucesso: #2ecc71; }
         body { margin: 0; padding: 0; background: var(--cor-fundo); font-family: 'Segoe UI', sans-serif; overflow: hidden; color: white; }
         #map { position: absolute; top: 0; bottom: 0; width: 100%; display: none; }
         
-        #speed-panel { position: fixed; bottom: 100px; left: 15px; z-index: 200; display: none; flex-direction: column; align-items: center; }
-        #current-speed { font-size: 42px; font-weight: 900; background: var(--cor-ui); padding: 8px 15px; border-radius: 12px; border: 2px solid #444; min-width: 60px; text-align: center; }
-        #speed-limit { font-size: 20px; font-weight: bold; color: #121212; background: white; border: 4px solid #e74c3c; width: 45px; height: 45px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-top: -10px; z-index: 210; }
+        /* Painel de Busca no Topo */
+        #nav-header { position: fixed; top: 10px; left: 10px; right: 10px; z-index: 200; display: none; flex-direction: column; gap: 8px; }
+        .search-box { background: var(--cor-ui); border-radius: 12px; border: 1px solid #444; overflow: hidden; }
         
-        #nav-header { position: fixed; top: 10px; left: 10px; right: 10px; z-index: 200; display: none; flex-direction: column; gap: 5px; }
-        .search-box { background: var(--cor-ui); border-radius: 10px; border: 1px solid #444; overflow: hidden; }
-        
-        #status-bar { position: fixed; bottom: 0; left: 0; width: 100%; background: var(--cor-ui); padding: 12px; z-index: 150; display: none; justify-content: space-around; border-top: 1px solid #333; }
+        /* Ajuste do Geocoder para Fortaleza */
+        .mapboxgl-ctrl-geocoder { width: 100% !important; max-width: none !important; background: transparent; box-shadow: none; }
+        .mapboxgl-ctrl-geocoder--input { color: white !important; padding: 15px 45px !important; font-size: 16px !important; }
+        .mapboxgl-ctrl-geocoder--suggestions { background: #1e1e1e !important; color: white !important; border: 1px solid #444 !important; }
+
+        /* Status Bar Inferior */
+        #status-bar { position: fixed; bottom: 0; left: 0; width: 100%; background: var(--cor-ui); padding: 15px; z-index: 150; display: none; justify-content: space-around; border-top: 1px solid #333; }
         .stat-val { display: block; font-size: 20px; font-weight: 800; color: var(--cor-sucesso); }
-        .stat-lab { font-size: 10px; color: #888; text-transform: uppercase; }
 
-        .seta-veiculo { width: 0; height: 0; border-left: 10px solid transparent; border-right: 10px solid transparent; border-bottom: 30px solid #3498db; filter: drop-shadow(0 0 5px #3498db); }
+        /* Seta e Velocímetro */
+        .seta-veiculo { width: 0; height: 0; border-left: 12px solid transparent; border-right: 12px solid transparent; border-bottom: 35px solid #3498db; filter: drop-shadow(0 0 5px #3498db); }
+        #speed-panel { position: fixed; bottom: 100px; left: 15px; z-index: 200; display: none; flex-direction: column; align-items: center; }
+        #current-speed { font-size: 40px; font-weight: 900; background: var(--cor-ui); padding: 10px; border-radius: 12px; border: 2px solid #444; }
 
-        #btn-start { background: var(--cor-principal); color: white; border: none; padding: 15px 35px; border-radius: 30px; font-weight: bold; position: fixed; bottom: 110px; right: 15px; z-index: 150; display: none; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.4); }
-        
+        #sidebar { position: fixed; top: 0; left: -320px; width: 300px; height: 100%; background: #1a1a1a; z-index: 400; transition: 0.4s; padding: 25px; box-sizing: border-box; padding-top: 80px; border-right: 1px solid #333; }
+        #sidebar.active { left: 0; }
+        select, input { width: 100%; padding: 12px; background: #2c2c2c; border: 1px solid #444; border-radius: 8px; color: white; margin-bottom: 15px; }
+
+        #btn-start { background: var(--cor-principal); color: white; border: none; padding: 18px 40px; border-radius: 35px; font-weight: bold; position: fixed; bottom: 110px; right: 15px; z-index: 150; display: none; cursor: pointer; }
         #login-screen { position: fixed; width: 100%; height: 100%; background: var(--cor-fundo); display: flex; align-items: center; justify-content: center; z-index: 500; flex-direction: column; }
-        #install-prompt { display: none; margin-top: 20px; width: 85%; max-width: 320px; }
     </style>
 </head>
 <body>
@@ -44,19 +51,32 @@
 <div id="login-screen">
     <div style="text-align: center; width: 85%;">
         <h1>Minha Rota v21</h1>
-        <p style="color:#666">Navegador Inteligente FZ25</p>
-        <input type="password" id="group-key" placeholder="Senha do Grupo" style="width: 100%; padding: 18px; border-radius: 12px; background: #1e1e1e; color: white; border: 1px solid #333; text-align: center; margin-bottom: 20px;">
-        <button onclick="App.autenticar()" style="width: 100%; padding: 18px; border-radius: 12px; background: var(--cor-principal); color: white; border: none; font-weight: bold; cursor: pointer;">ACESSAR GPS</button>
-        
-        <div id="install-prompt">
-            <button id="btnInstall" style="width: 100%; padding: 15px; border-radius: 12px; background: #34495e; color: white; border: none; font-weight: bold; cursor: pointer;">📲 INSTALAR NO ANDROID</button>
-        </div>
+        <input type="password" id="group-key" placeholder="Senha do Grupo" style="width: 100%; text-align: center; padding: 18px; border-radius: 12px; background: #1e1e1e; border: 1px solid #333; color: white;">
+        <button onclick="App.autenticar()" style="width: 100%; padding: 18px; border-radius: 12px; background: var(--cor-principal); color: white; border: none; font-weight: bold; margin-top: 20px;">ENTRAR</button>
+        <button id="btnInstall" style="width: 100%; padding: 15px; border-radius: 12px; background: #34495e; color: white; border: none; margin-top: 15px; display: none;">📲 INSTALAR APP</button>
     </div>
+</div>
+
+<button onclick="App.toggleMenu()" style="position: fixed; top: 15px; left: 15px; z-index: 300; background: var(--cor-ui); color: white; border: none; padding: 10px; border-radius: 8px;">☰</button>
+
+<div id="sidebar">
+    <h3 style="color: var(--cor-principal);">Configuração do Veículo</h3>
+    <label style="font-size: 10px; color: #666;">MONTADORA</label>
+    <select id="sel-montadora" onchange="App.atualizarModelos()">
+        <option value="">Selecione...</option>
+        <option value="yamaha">Yamaha</option>
+        <option value="honda">Honda</option>
+    </select>
+    <label style="font-size: 10px; color: #666;">MODELO</label>
+    <select id="sel-modelo" onchange="App.aplicarConsumo()"><option value="">--</option></select>
+    <label style="font-size: 10px; color: #666;">CONSUMO (KM/L)</label>
+    <input type="number" id="v-consumo" value="29">
+    <button onclick="App.salvarConfig()" style="width: 100%; padding: 15px; background: var(--cor-sucesso); border: none; color: white; border-radius: 12px; font-weight: bold;">SALVAR</button>
 </div>
 
 <div id="speed-panel">
     <div id="current-speed">0</div>
-    <div id="speed-limit">60</div>
+    <div style="font-size: 10px; color: #888;">KM/H</div>
 </div>
 
 <div id="nav-header">
@@ -64,54 +84,48 @@
     <div class="search-box" id="box-destino"></div>
 </div>
 
-<button id="btn-start" onclick="App.iniciarNavegacao()">INICIAR ROTA</button>
+<button id="btn-start" onclick="App.iniciarNavegacao()">IR AGORA</button>
 
 <div id="status-bar">
-    <div class="stat-item"><span class="stat-val" id="val-tempo">--</span><span class="stat-lab">Min</span></div>
-    <div class="stat-item"><span class="stat-val" id="val-custo">--</span><span class="stat-lab">Gasto</span></div>
-    <div class="stat-item"><span class="stat-val" id="val-dist">--</span><span class="stat-lab">KM</span></div>
+    <div class="stat-item"><span id="val-tempo" class="stat-val">--</span><span class="stat-lab">Minutos</span></div>
+    <div class="stat-item"><span id="val-custo" class="stat-val">--</span><span class="stat-lab">Custo Est.</span></div>
+    <div class="stat-item"><span id="val-dist" class="stat-val">--</span><span class="stat-lab">KM</span></div>
 </div>
 
 <div id="map"></div>
 
 <script>
     let deferredPrompt;
-    window.addEventListener('beforeinstallprompt', (e) => {
-        e.preventDefault();
-        deferredPrompt = e;
-        document.getElementById('install-prompt').style.display = 'block';
-    });
+    window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferredPrompt = e; document.getElementById('btnInstall').style.display = 'block'; });
+    document.getElementById('btnInstall').addEventListener('click', async () => { if(deferredPrompt) { deferredPrompt.prompt(); deferredPrompt = null; } });
+    if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js');
 
-    document.getElementById('btnInstall').addEventListener('click', async () => {
-        if (deferredPrompt) {
-            deferredPrompt.prompt();
-            const { outcome } = await deferredPrompt.userChoice;
-            if (outcome === 'accepted') document.getElementById('install-prompt').style.display = 'none';
-            deferredPrompt = null;
-        }
-    });
-
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register('./sw.js').then(reg => console.log('SW ativo'));
-        });
-    }
+    const VEICULOS = {
+        yamaha: { 'Fazer 250 (FZ25)': 29, 'MT-03': 22, 'Lander 250': 30 },
+        honda: { 'CB 300F Twister': 32, 'XRE 300': 27, 'Bros 160': 40 }
+    };
 
     const App = {
-        map: null, marker: null, userLoc: [-38.52, -3.73], modoGPS: false,
-        origem: null, destino: null, limitVelocidade: 60,
+        map: null, marker: null, userLoc: [-38.5267, -3.7319], modoGPS: false,
+        origem: null, destino: null,
 
         autenticar() {
             if (document.getElementById('group-key').value === 'FZ25-FOR') {
                 document.getElementById('login-screen').style.display = 'none';
                 document.getElementById('map').style.display = 'block';
                 document.getElementById('nav-header').style.display = 'flex';
-                document.getElementById('speed-panel').style.display = 'flex';
                 this.initMapa();
-            } else {
-                alert('Senha incorreta!');
             }
         },
+
+        atualizarModelos() {
+            const m = document.getElementById('sel-montadora').value;
+            const s = document.getElementById('sel-modelo');
+            s.innerHTML = '<option value="">Modelo...</option>';
+            if(m) Object.keys(VEICULOS[m]).forEach(mod => s.innerHTML += `<option value="${VEICULOS[m][mod]}">${mod}</option>`);
+        },
+
+        aplicarConsumo() { document.getElementById('v-consumo').value = document.getElementById('sel-modelo').value; },
 
         initMapa() {
             mapboxgl.accessToken = 'pk.eyJ1Ijoid2V2ZXJzb25mIiwiYSI6ImNtbHF5bmh1YTA0djgzZHB4dTJpaG9rbHgifQ.jo3DG631F030AxG_nFKVEQ';
@@ -119,16 +133,24 @@
                 container: 'map', 
                 style: 'mapbox://styles/mapbox/dark-v11', 
                 center: this.userLoc, 
-                zoom: 12,
-                pitch: 0 
+                zoom: 12 
             });
 
             const el = document.createElement('div'); el.className = 'seta-veiculo';
             this.marker = new mapboxgl.Marker(el).setLngLat(this.userLoc).addTo(this.map);
 
-            const opt = { accessToken: mapboxgl.accessToken, mapboxgl: mapboxgl, countries: 'br', proximity: { longitude: -38.52, latitude: -3.73 } };
-            const geoO = new MapboxGeocoder({ ...opt, placeholder: 'Origem: Minha Localização' });
-            const geoD = new MapboxGeocoder({ ...opt, placeholder: 'Destino: Para onde?' });
+            // GEOCONTROLERS TURBINADOS PARA FORTALEZA
+            const geoOpt = { 
+                accessToken: mapboxgl.accessToken, 
+                mapboxgl: mapboxgl, 
+                countries: 'br', 
+                proximity: { longitude: -38.52, latitude: -3.73 }, // Foca em Fortaleza
+                bbox: [-38.70, -3.90, -38.30, -3.60], // Limita a busca à região metropolitana
+                types: 'address,poi,place' 
+            };
+
+            const geoO = new MapboxGeocoder({ ...geoOpt, placeholder: 'Origem: Minha Localização' });
+            const geoD = new MapboxGeocoder({ ...geoOpt, placeholder: 'Destino: Para onde vamos?' });
 
             document.getElementById('box-origem').appendChild(geoO.onAdd(this.map));
             document.getElementById('box-destino').appendChild(geoD.onAdd(this.map));
@@ -140,25 +162,16 @@
                 const pos = [p.coords.longitude, p.coords.latitude];
                 this.userLoc = pos;
                 this.marker.setLngLat(pos);
-                
-                const speed = Math.round((p.coords.speed || 0) * 3.6);
-                document.getElementById('current-speed').innerText = speed;
+                document.getElementById('current-speed').innerText = Math.round((p.coords.speed || 0) * 3.6);
                 
                 if(this.modoGPS) {
-                    this.map.easeTo({ center: pos, bearing: p.coords.heading || 0, duration: 1000 });
+                    this.map.setCenter(pos);
+                    if (p.coords.heading && p.coords.speed > 1.5) {
+                        this.map.setBearing(p.coords.heading);
+                        el.style.transform = `rotate(${p.coords.heading}deg)`;
+                    }
                 }
             }, null, { enableHighAccuracy: true });
-
-            this.map.on('load', () => {
-                this.map.addSource('traffic', { type: 'vector', url: 'mapbox://mapbox.mapbox-traffic-v1' });
-                this.map.addLayer({
-                    'id': 'traffic-layer', 'type': 'line', 'source': 'traffic', 'source-layer': 'traffic',
-                    'paint': { 
-                        'line-width': 3, 
-                        'line-color': ['match', ['get', 'congestion'], 'low', '#2ecc71', 'moderate', '#f1c40f', 'heavy', '#e67e22', 'severe', '#e74c3c', '#000000'] 
-                    }
-                });
-            });
         },
 
         async tracar() {
@@ -173,7 +186,7 @@
                 
                 document.getElementById('val-tempo').innerText = Math.round(r.duration/60);
                 document.getElementById('val-dist').innerText = (r.distance/1000).toFixed(1);
-                document.getElementById('val-custo').innerText = "R$ " + ((r.distance/1000 / 29) * 6.15).toFixed(2);
+                document.getElementById('val-custo').innerText = "R$ " + ((r.distance/1000 / document.getElementById('v-consumo').value) * 6.15).toFixed(2);
                 document.getElementById('btn-start').style.display = 'block';
                 document.getElementById('status-bar').style.display = 'flex';
             }
@@ -183,9 +196,12 @@
             this.modoGPS = true;
             document.getElementById('nav-header').style.display = 'none';
             document.getElementById('btn-start').style.display = 'none';
-            this.map.flyTo({ center: this.userLoc, zoom: 18, pitch: 60, speed: 1.2 });
-            window.speechSynthesis.speak(new SpeechSynthesisUtterance("Navegação iniciada. Siga a linha azul."));
-        }
+            document.getElementById('speed-panel').style.display = 'flex';
+            this.map.flyTo({ center: this.userLoc, zoom: 18, pitch: 60 });
+        },
+
+        toggleMenu() { document.getElementById('sidebar').classList.toggle('active'); },
+        salvarConfig() { this.toggleMenu(); alert("Veículo salvo!"); }
     };
 </script>
 </body>
