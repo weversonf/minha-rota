@@ -1,0 +1,40 @@
+# Variáveis de ambiente
+.env
+.env.local
+.env.*.local
+
+# Arquivos de configuração sensível
+config.local.js
+secrets.js
+
+# Node modules (se usar Node.js no futuro)
+node_modules/
+package-lock.json
+yarn.lock
+
+# IDEs e editores
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Arquivos temporários
+*.tmp
+*.temp
+.cache/
+
+# Builds
+dist/
+build/
+
+# Arquivos do sistema
+Thumbs.db
+.DS_Store

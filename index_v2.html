@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#121212">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>Minha Rota v12 - GPS FZ25</title>
+    
+    <link rel="manifest" href="data:application/manifest+json,{&quot;name&quot;:&quot;Minha Rota&quot;,&quot;short_name&quot;:&quot;MinhaRota&quot;,&quot;start_url&quot;:&quot;.&quot;,&quot;display&quot;:&quot;standalone&quot;,&quot;background_color&quot;:&quot;#121212&quot;,&quot;theme_color&quot;:&quot;#e74c3c&quot;}">
+
+    <script src="https://api.mapbox.com/mapbox-gl-js/v3.0.1/mapbox-gl.js"></script>
+    <link href="https://api.mapbox.com/mapbox-gl-js/v3.0.1/mapbox-gl.css" rel="stylesheet" />
+    <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.0.0/mapbox-gl-geocoder.min.js"></script>
+    <link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.0.0/mapbox-gl-geocoder.css" type="text/css">
+
+    <style>
+        :root { 
+            --cor-principal: #e74c3c; 
+            --cor-fundo: #121212; 
+            --cor-menu: #1e1e1e;
+            --cor-sucesso: #27ae60;
+            --cor-aviso: #f39c12;
+            --cor-erro: #e74c3c;
+        }
+        
+        * {
+            box-sizing: border-box;
+        }
+        
+        body { 
+            margin: 0; 
+            padding: 0; 
+            background: var(--cor-fundo); 
+            font-family: 'Segoe UI', sans-serif; 
+            overflow: hidden;
+            color: #fff;
+        }
+        
+        #map { 
+            position: absolute; 
+            top: 0; 
+            bottom: 0; 
+            width: 100%; 
+            display: none; 
+        }
+        
+        /* Tela de Login */
+        #login-screen { 
+            position: fixed; 
+            width: 100%; 
+            height: 100%; 
+            background: var(--cor-fundo); 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            color: white; 
+            z-index: 200;
+            padding: 20px;
+        }
+        
+        .login-container {
+            text-align: center; 
+            width: 100%; 
+            max-width: 400px;
+        }
+        
+        .login-container h1 {
+            margin-bottom: 5px;
+            font-size: 28px;
+        }
+        
+        .login-container p {
+            color: #888; 
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        
+        .login-container input {
+            padding: 18px; 
+            border-radius: 12px; 
+            width: 100%; 
+            background: var(--cor-menu); 
+            color: white; 
+            text-align: center; 
+            border: 1px solid #333; 
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+        
+        .login-container input::placeholder {
+            color: #666;
+        }
+        
+        .login-container button {
+            padding: 18px; 
+            background: var(--cor-principal); 
+            color: white; 
+            border: none; 
+            border-radius: 12px; 
+            font-weight: bold; 
+            width: 100%;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        .login-container button:hover {
+            background: #c0392b;
+        }
+        
+        .login-container button:active {
+            transform: scale(0.98);
+        }
+        
+        /* Botões Flutuantes */
+        .float-btn { 
+            position: fixed; 
+            z-index: 150; 
+            background: var(--cor-menu); 
+            color: white; 
+            border: none; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+            transition: all 0.3s;
+        }
+        
+        .float-btn:hover {
+            box-shadow: 0 4px 15px rgba(0,0,0,0.7);
+        }
+        
+        #menu-btn { 
+            top: 15px; 
+            left: 15px; 
+            padding: 12px; 
+            display: none;
+            font-size: 20px;
+        }
+        
+        #panic-btn { 
+            bottom: 120px; 
+            right: 15px; 
+            width: 60px; 
+            height: 60px; 
+            border-radius: 50%; 
+            background: #ff0000; 
+            font-size: 24px; 
+            color: white; 
+            display: none; 
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse { 
+            0% { transform: scale(1); } 
+            50% { transform: scale(1.1); } 
+            100% { transform: scale(1); } 
+        }
+
+        /* Menu Lateral */
+        #sidebar { 
+            position: fixed; 
+            top: 0; 
+            left: -280px; 
+            width: 280px; 
+            height: 100%; 
+            background: var(--cor-menu); 
+            color: white; 
+            z-index: 160; 
+            transition: 0.3s; 
+            padding: 20px; 
+            box-sizing: border-box; 
+            padding-top: 75px;
+            overflow-y: auto;
+        }
+        
+        #sidebar.active { 
+            left: 0; 
+        }
+        
+        #sidebar h3 {
+            margin-top: 0;
+            font-size: 18px;
+        }
+        
+        #sidebar label {
+            font-size: 11px; 
+            color: #888;
+            display: block;
+            margin-top: 15px;
+            margin-bottom: 5px;
+        }
+        
+        #sidebar input {
+            width: 100%; 
+            padding: 10px; 
+            margin-bottom: 15px; 
+            background: #2c2c2c; 
+            color: white; 
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        
+        #sidebar button {
+            width: 100%; 
+            padding: 12px; 
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+            margin-bottom: 10px;
+            transition: all 0.3s;
+            font-size: 14px;
+        }
+        
+        #sidebar .btn-salvar {
+            background: var(--cor-sucesso); 
+            color: white;
+        }
+        
+        #sidebar .btn-salvar:hover {
+            background: #229954;
+        }
+        
+        #sidebar .btn-logout {
+            background: none; 
+            border: 1px solid var(--cor-principal); 
+            color: var(--cor-principal);
+        }
+        
+        #sidebar .btn-logout:hover {
+            background: rgba(231, 76, 60, 0.1);
+        }
+
+        /* Card de Informações */
+        #info-card { 
+            position: fixed; 
+            bottom: 25px; 
+            left: 5%; 
+            width: 90%; 
+            background: white; 
+            padding: 20px; 
+            border-radius: 20px; 
+            display: none; 
+            z-index: 50; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            color: #333;
+        }
+        
+        .card-header {
+            display: flex; 
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .card-header button {
+            border: none; 
+            background: none; 
+            font-size: 24px;
+            cursor: pointer;
+            color: #999;
+        }
+        
+        .valor-gasto { 
+            color: var(--cor-sucesso); 
+            font-size: 24px; 
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+        
+        .btn-gps { 
+            background: var(--cor-sucesso); 
+            color: white; 
+            border: none; 
+            padding: 15px; 
+            border-radius: 12px; 
+            width: 100%; 
+            font-weight: bold; 
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .btn-gps:hover {
+            background: #229954;
+        }
+        
+        .btn-gps:active {
+            transform: scale(0.98);
+        }
+        
+        /* Notificações */
+        .notificacao {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 8px;
+            color: white;
+            z-index: 9999;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+        }
+        
+        .notificacao.sucesso {
+            background: var(--cor-sucesso);
+        }
+        
+        .notificacao.erro {
+            background: var(--cor-erro);
+        }
+        
+        .notificacao.aviso {
+            background: var(--cor-aviso);
+        }
+        
+        /* Responsividade */
+        @media (max-width: 600px) {
+            #sidebar {
+                width: 100%;
+                left: -100%;
+            }
+            
+            #info-card {
+                left: 10px;
+                right: 10px;
+                width: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div id="login-screen">
+    <div class="login-container">
+        <h1>Minha Rota v12</h1>
+        <p>FZ25 Security Edition</p>
+        <input type="password" id="group-key" placeholder="Senha do Grupo">
+        <button onclick="App.autenticar()">ENTRAR NO MAPA</button>
+    </div>
+</div>
+
+<button id="menu-btn" class="float-btn" onclick="App.toggleMenu()">☰</button>
+<button id="panic-btn" class="float-btn" onclick="App.dispararSOS()">🆘</button>
+
+<div id="sidebar">
+    <h3>Ajustes FZ25</h3>
+    <label>Consumo (km/L)</label>
+    <input type="number" id="v-consumo" value="29" min="1" max="100">
+    <label>Preço Gasolina (R$)</label>
+    <input type="number" step="0.01" id="v-preco" value="6.15" min="0.01" max="20">
+    <button class="btn-salvar" onclick="App.salvarConfigs()">SALVAR</button>
+    <button class="btn-logout" onclick="App.logout()">LOGOUT</button>
+</div>
+
+<div id="map"></div>
+
+<div id="info-card">
+    <div class="card-header">
+        <div id="rota-distancia" style="font-weight: bold;">Calculando...</div>
+        <button onclick="document.getElementById('info-card').style.display='none'">×</button>
+    </div>
+    <div id="gasto-estimado" class="valor-gasto">R$ 0,00</div>
+    <button class="btn-gps" onclick="App.ativarNavegacao()">INICIAR GPS</button>
+</div>
+
+<!-- Scripts -->
+<script src="config.js"></script>
+<script src="utils.js"></script>
+<script>
+    /**
+     * Aplicação Principal - Minha Rota v12
+     * Gerencia toda a lógica da aplicação
+     */
+    const App = {
+        // Estado da aplicação
+        estado: {
+            autenticado: false,
+            modoGPS: false,
+            localizacaoUsuario: CONFIG.centro,
+            ultimoBairro: "",
+            destinoAtual: null,
+            map: null,
+            geocoder: null
+        },
+
+        /**
+         * Inicializa a aplicação
+         */
+        init() {
+            console.log('Inicializando Minha Rota v12...');
+            
+            // Verificar autenticação anterior
+            if (this.verificarAutenticacao()) {
+                this.iniciarApp();
+            }
+            
+            // Carregar configurações salvas
+            this.carregarConfigs();
+        },
+
+        /**
+         * Verifica se o usuário já foi autenticado
+         */
+        verificarAutenticacao() {
+            const chave = Utils.obterLocalStorage(CONFIG.storage.chaveAutenticacao);
+            return chave === CONFIG.chaveAcesso;
+        },
+
+        /**
+         * Autentica o usuário com a chave fornecida
+         */
+        autenticar() {
+            const chaveInput = document.getElementById('group-key');
+            const chave = chaveInput.value.trim();
+            
+            if (!chave) {
+                Utils.mostrarNotificacao('Digite a chave de acesso', 'aviso');
+                return;
+            }
+            
+            if (chave === CONFIG.chaveAcesso) {
+                Utils.salvarLocalStorage(CONFIG.storage.chaveAutenticacao, chave);
+                this.iniciarApp();
+            } else {
+                Utils.mostrarNotificacao(CONFIG.mensagens.chaveInvalida, 'erro');
+                chaveInput.value = '';
+                chaveInput.focus();
+            }
+        },
+
+        /**
+         * Inicia a aplicação após autenticação
+         */
+        iniciarApp() {
+            this.estado.autenticado = true;
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('map').style.display = 'block';
+            document.getElementById('menu-btn').style.display = 'block';
+            document.getElementById('panic-btn').style.display = 'block';
+            
+            this.inicializarMapa();
+        },
+
+        /**
+         * Inicializa o mapa Mapbox
+         */
+        inicializarMapa() {
+            try {
+                mapboxgl.accessToken = CONFIG.token;
+                
+                this.estado.map = new mapboxgl.Map({
+                    container: 'map',
+                    style: CONFIG.mapa.estilo,
+                    center: CONFIG.centro,
+                    zoom: CONFIG.mapa.zoom
+                });
+
+                // Adicionar geocoder
+                this.estado.geocoder = new MapboxGeocoder({
+                    accessToken: mapboxgl.accessToken,
+                    mapboxgl: mapboxgl,
+                    placeholder: 'Destino...',
+                    countries: 'br'
+                });
+                this.estado.map.addControl(this.estado.geocoder);
+
+                // Adicionar controle de geolocalização
+                const geolocate = new mapboxgl.GeolocateControl({
+                    positionOptions: { enableHighAccuracy: true },
+                    trackUserLocation: true,
+                    showUserHeading: true
+                });
+                this.estado.map.addControl(geolocate, 'bottom-right');
+
+                // Event listeners
+                geolocate.on('geolocate', (e) => this.aoLocalizarUsuario(e));
+                this.estado.geocoder.on('result', (e) => this.calcularRota(e.result.center));
+                this.estado.map.on('click', (e) => this.calcularRota(e.lngLat));
+                this.estado.map.on('load', () => this.carregarCamadas());
+
+                console.log('Mapa inicializado com sucesso');
+            } catch (erro) {
+                console.error('Erro ao inicializar mapa:', erro);
+                Utils.mostrarNotificacao(CONFIG.mensagens.erroMapa, 'erro');
+            }
+        },
+
+        /**
+         * Carrega as camadas de bairros no mapa
+         */
+        carregarCamadas() {
+            try {
+                // Adicionar fonte de dados
+                this.estado.map.addSource('bairros-src', {
+                    type: 'geojson',
+                    data: CONFIG.urlBairros
+                });
+
+                // Camada de preenchimento dos bairros
+                this.estado.map.addLayer({
+                    id: 'camada-bairros',
+                    type: 'fill',
+                    source: 'bairros-src',
+                    paint: {
+                        'fill-color': [
+                            'match',
+                            ['upcase', ['get', 'nome']],
+                            ...Object.entries(CONFIG.riscoBairros).flat(),
+                            'transparent'
+                        ],
+                        'fill-opacity': 0.45
+                    }
+                });
+
+                // Camada de contorno
+                this.estado.map.addLayer({
+                    id: 'contorno',
+                    type: 'line',
+                    source: 'bairros-src',
+                    paint: {
+                        'line-color': '#444',
+                        'line-width': 0.5
+                    }
+                });
+
+                // Marcador de segurança
+                const el = document.createElement('div');
+                el.style.fontSize = '30px';
+                el.innerHTML = '🛡️';
+                new mapboxgl.Marker(el)
+                    .setLngLat([-38.489, -3.732])
+                    .setPopup(new mapboxgl.Popup().setHTML("🛡️ Posto Seguro"))
+                    .addTo(this.estado.map);
+
+                // Adicionar fonte de rota
+                this.estado.map.addSource('route', {
+                    type: 'geojson',
+                    data: {
+                        type: 'Feature',
+                        geometry: {
+                            type: 'LineString',
+                            coordinates: []
+                        }
+                    }
+                });
+
+                // Adicionar camada de rota
+                this.estado.map.addLayer({
+                    id: 'route-line',
+                    type: 'line',
+                    source: 'route',
+                    paint: {
+                        'line-color': '#3498db',
+                        'line-width': 7,
+                        'line-opacity': 0.8
+                    }
+                });
+
+                console.log('Camadas carregadas com sucesso');
+            } catch (erro) {
+                console.error('Erro ao carregar camadas:', erro);
+            }
+        },
+
+        /**
+         * Callback quando o usuário é localizado
+         */
+        aoLocalizarUsuario(evento) {
+            this.estado.localizacaoUsuario = [
+                evento.coords.longitude,
+                evento.coords.latitude
+            ];
+
+            // Atualizar mapa em modo GPS
+            if (this.estado.modoGPS) {
+                this.estado.map.setCenter(this.estado.localizacaoUsuario);
+                if (evento.coords.heading) {
+                    this.estado.map.setBearing(evento.coords.heading);
+                }
+            }
+
+            // Verificar bairro atual
+            this.verificarBairroAtual();
+        },
+
+        /**
+         * Verifica o bairro atual e emite alerta se necessário
+         */
+        verificarBairroAtual() {
+            try {
+                const features = this.estado.map.queryRenderedFeatures(
+                    this.estado.map.project(this.estado.localizacaoUsuario),
+                    { layers: ['camada-bairros'] }
+                );
+
+                if (features.length > 0) {
+                    const bairro = features[0].properties.nome.toUpperCase();
+                    
+                    if (CONFIG.riscoBairros[bairro] && bairro !== this.estado.ultimoBairro) {
+                        const mensagem = CONFIG.mensagens.avisoRisco.replace('{bairro}', bairro);
+                        Utils.falarMensagem(mensagem);
+                        this.estado.ultimoBairro = bairro;
+                    }
+                }
+            } catch (erro) {
+                console.error('Erro ao verificar bairro:', erro);
+            }
+        },
+
+        /**
+         * Calcula a rota para um destino
+         */
+        async calcularRota(destino) {
+            try {
+                const dest = [destino.lng || destino[0], destino.lat || destino[1]];
+                
+                const resposta = await fetch(
+                    `https://api.mapbox.com/directions/v5/mapbox/driving/` +
+                    `${this.estado.localizacaoUsuario[0]},${this.estado.localizacaoUsuario[1]};` +
+                    `${dest[0]},${dest[1]}?geometries=geojson&access_token=${CONFIG.token}`
+                );
+
+                if (!resposta.ok) {
+                    throw new Error('Erro na requisição de rota');
+                }
+
+                const dados = await resposta.json();
+
+                if (dados.routes && dados.routes[0]) {
+                    const rota = dados.routes[0];
+                    const distancia = rota.distance / 1000;
+                    
+                    // Atualizar visualização da rota
+                    this.estado.map.getSource('route').setData({
+                        type: 'Feature',
+                        geometry: rota.geometry
+                    });
+
+                    // Calcular custo
+                    const consumo = parseFloat(document.getElementById('v-consumo').value);
+                    const preco = parseFloat(document.getElementById('v-preco').value);
+                    const custo = Utils.calcularCusto(distancia, consumo, preco);
+
+                    // Atualizar card de informações
+                    document.getElementById('rota-distancia').innerText = Utils.formatarDistancia(rota.distance);
+                    document.getElementById('gasto-estimado').innerText = Utils.formatarMoeda(custo);
+                    document.getElementById('info-card').style.display = 'block';
+
+                    this.estado.destinoAtual = dest;
+                } else {
+                    Utils.mostrarNotificacao(CONFIG.mensagens.erroRota, 'erro');
+                }
+            } catch (erro) {
+                console.error('Erro ao calcular rota:', erro);
+                Utils.mostrarNotificacao(CONFIG.mensagens.erroRota, 'erro');
+            }
+        },
+
+        /**
+         * Ativa o modo GPS
+         */
+        ativarNavegacao() {
+            this.estado.modoGPS = true;
+            document.getElementById('info-card').style.display = 'none';
+            this.estado.map.flyTo({
+                center: this.estado.localizacaoUsuario,
+                zoom: CONFIG.mapa.zoomNavegacao,
+                pitch: CONFIG.mapa.pitch,
+                speed: 0.8
+            });
+            Utils.falarMensagem(CONFIG.mensagens.modoGPS);
+        },
+
+        /**
+         * Dispara SOS via WhatsApp
+         */
+        dispararSOS() {
+            Utils.abrirWhatsApp(
+                this.estado.localizacaoUsuario[1],
+                this.estado.localizacaoUsuario[0]
+            );
+        },
+
+        /**
+         * Alterna visibilidade do menu
+         */
+        toggleMenu() {
+            document.getElementById('sidebar').classList.toggle('active');
+        },
+
+        /**
+         * Salva as configurações
+         */
+        salvarConfigs() {
+            const consumo = document.getElementById('v-consumo').value;
+            const preco = document.getElementById('v-preco').value;
+
+            if (!Utils.validarNumeroPositivo(consumo) || !Utils.validarNumeroPositivo(preco)) {
+                Utils.mostrarNotificacao('Valores inválidos', 'erro');
+                return;
+            }
+
+            Utils.salvarLocalStorage(CONFIG.storage.chaveConsumo, consumo);
+            Utils.salvarLocalStorage(CONFIG.storage.chavePreco, preco);
+            Utils.mostrarNotificacao('Configurações salvas com sucesso', 'sucesso');
+            this.toggleMenu();
+        },
+
+        /**
+         * Carrega as configurações salvas
+         */
+        carregarConfigs() {
+            const consumo = Utils.obterLocalStorage(CONFIG.storage.chaveConsumo);
+            const preco = Utils.obterLocalStorage(CONFIG.storage.chavePreco);
+
+            if (consumo) document.getElementById('v-consumo').value = consumo;
+            if (preco) document.getElementById('v-preco').value = preco;
+        },
+
+        /**
+         * Faz logout do usuário
+         */
+        logout() {
+            if (confirm('Deseja realmente fazer logout?')) {
+                Utils.limparLocalStorage(false);
+                location.reload();
+            }
+        }
+    };
+
+    // Inicializar aplicação quando o DOM estiver pronto
+    document.addEventListener('DOMContentLoaded', () => App.init());
+    
+    // Permitir Enter na tela de login
+    document.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter' && !App.estado.autenticado) {
+            App.autenticar();
+        }
+    });
+</script>
+</body>
+</html>
