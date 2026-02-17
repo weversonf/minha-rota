@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Minha Rota v08</title>
+    <title>Minha Rota v09</title>
     
     <script src="https://api.mapbox.com/mapbox-gl-js/v3.0.1/mapbox-gl.js"></script>
     <link href="https://api.mapbox.com/mapbox-gl-js/v3.0.1/mapbox-gl.css" rel="stylesheet" />
@@ -25,25 +25,20 @@
         #sidebar {
             position: fixed; top: 0; left: -280px; width: 280px; height: 100%;
             background: var(--cor-menu); color: white; z-index: 140;
-            transition: 0.3s ease-in-out; padding: 20px; box-sizing: border-box; padding-top: 75px;
+            transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1); padding: 20px; box-sizing: border-box; padding-top: 75px;
         }
         #sidebar.active { left: 0; }
         
-        /* Configurações */
         .config-item { margin-bottom: 20px; }
         .config-item label { display: block; font-size: 14px; color: #888; margin-bottom: 5px; }
         .config-item input { width: 100%; padding: 10px; background: #2c2c2c; border: 1px solid #444; color: white; border-radius: 5px; }
 
         .mapboxgl-ctrl-geocoder { min-width: 200px; border-radius: 10px; margin-top: 15px !important; margin-left: 65px !important; }
 
-        /* Login */
         #login-screen { position: fixed; width: 100%; height: 100%; background: var(--cor-fundo); display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; z-index: 200; }
         
-        /* Info Card */
         #info-card { position: fixed; bottom: 25px; left: 5%; width: 90%; background: white; padding: 20px; border-radius: 20px; display: none; z-index: 50; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         .valor-gasto { color: #27ae60; font-size: 24px; font-weight: bold; }
-        
-        /* Marcador de Apoio */
         .marker-apoio { font-size: 30px; cursor: pointer; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)); }
     </style>
 </head>
@@ -51,25 +46,26 @@
 
 <div id="login-screen">
     <div style="text-align: center; width: 85%;">
-        <h1>Minha Rota v08</h1>
+        <h1>Minha Rota v09</h1>
+        <p style="color: #666; margin-bottom: 20px;">Segurança FZ25 - Fortaleza</p>
         <input type="password" id="group-key" placeholder="Chave do Grupo" style="padding: 18px; border-radius: 12px; border: 1px solid #333; margin-bottom: 15px; width: 100%; background: #1e1e1e; color: white; text-align: center;">
-        <button onclick="checkKey()" style="padding: 18px; background: var(--cor-principal); color: white; border: none; border-radius: 12px; font-weight: bold; width: 100%;">ACESSAR</button>
+        <button onclick="checkKey()" style="padding: 18px; background: var(--cor-principal); color: white; border: none; border-radius: 12px; font-weight: bold; width: 100%;">ACESSAR MAPA</button>
     </div>
 </div>
 
 <button id="menu-btn" onclick="toggleMenu()">☰</button>
 
 <div id="sidebar">
-    <h3>Ajustes da FZ25</h3>
+    <h3>Configurações</h3>
     <div class="config-item">
-        <label>Consumo (km/L)</label>
+        <label>FZ25 Consumo (km/L)</label>
         <input type="number" id="v-consumo" value="29">
     </div>
     <div class="config-item">
-        <label>Gasolina (R$)</label>
+        <label>Preço Gasolina (R$)</label>
         <input type="number" step="0.01" id="v-preco" value="6.15">
     </div>
-    <button onclick="saveConfigs()" style="background: #27ae60; width: 100%; padding: 12px; border: none; color: white; border-radius: 8px; font-weight: bold;">SALVAR ALTERAÇÕES</button>
+    <button onclick="saveConfigs()" style="background: #27ae60; width: 100%; padding: 12px; border: none; color: white; border-radius: 8px; font-weight: bold;">SALVAR</button>
     <hr style="border:0; border-top: 1px solid #333; margin: 20px 0;">
     <button onclick="logout()" style="background: transparent; border: 1px solid #e74c3c; color: #e74c3c; width: 100%; padding: 10px; border-radius: 8px;">LOGOUT</button>
 </div>
@@ -78,7 +74,7 @@
 
 <div id="info-card">
     <div style="display: flex; justify-content: space-between;">
-        <div id="rota-distancia" style="font-weight: bold; color: #333;">Clique para traçar</div>
+        <div id="rota-distancia" style="font-weight: bold; color: #333;">Defina o destino</div>
         <button onclick="document.getElementById('info-card').style.display='none'" style="border: none; background: none; font-size: 20px;">×</button>
     </div>
     <div id="gasto-estimado" class="valor-gasto">R$ 0,00</div>
@@ -88,26 +84,30 @@
     const CONFIG = {
         token: 'pk.eyJ1Ijoid2V2ZXJzb25mIiwiYSI6ImNtbHF5bmh1YTA0djgzZHB4dTJpaG9rbHgifQ.jo3DG631F030AxG_nFKVEQ',
         chaveAcesso: 'FZ25-FOR',
-        centro: [-38.5267, -3.7319]
+        centro: [-38.5267, -3.7319],
+        // URL de exemplo para o GeoJSON dos bairros de Fortaleza
+        urlBairros: 'https://raw.githubusercontent.com/mapaslivres/municipios-br/master/ce/fortaleza/bairros.json'
     };
 
-    // --- DADOS DE FORTALEZA ---
-    const DB_LOCAIS = {
-        manchas: [
-            { id: 'm1', cor: '#ff0000', nome: 'Centro - Risco Alto', coords: [[[-38.540, -3.720], [-38.525, -3.720], [-38.525, -3.730], [-38.540, -3.730], [-38.540, -3.720]]] },
-            { id: 'm2', cor: '#ffa500', nome: 'Zona de Atenção', coords: [[[-38.510, -3.710], [-38.500, -3.710], [-38.500, -3.720], [-38.510, -3.720], [-38.510, -3.710]]] }
-        ],
-        apoios: [
-            { nome: 'Posto Shell 24h', coords: [-38.489, -3.732], desc: '🛡️ Ponto de apoio iluminado.' }
-        ]
+    // --- LISTA DE RISCO (NOMES DOS BAIRROS IGUAIS AO OFICIAL) ---
+    const RISCO_BAIRROS = {
+        'Centro': '#ff0000',
+        'Barra do Ceará': '#ff0000',
+        'Bom Jardim': '#ff0000',
+        'Messejana': '#ffa500',
+        'Parangaba': '#ffa500'
     };
+
+    const PONTOS_APOIO = [
+        { nome: 'Posto Shell 24h', coords: [-38.489, -3.732], desc: '🛡️ Ponto iluminado.' }
+    ];
 
     let userLocation = CONFIG.centro;
     let map;
 
     window.onload = function() {
         if (localStorage.getItem('minha_rota_key') === CONFIG.chaveAcesso) { iniciarApp(); }
-        if(localStorage.getItem('v_consumo')) document.getElementById('v-consumo').value = localStorage.getItem('v_consumo');
+        if (localStorage.getItem('v_consumo')) document.getElementById('v-consumo').value = localStorage.getItem('v_consumo');
     };
 
     function checkKey() {
@@ -136,24 +136,37 @@
 
     function initMap() {
         mapboxgl.accessToken = CONFIG.token;
-        map = new mapboxgl.Map({ container: 'map', style: 'mapbox://styles/mapbox/dark-v11', center: CONFIG.centro, zoom: 12.5 });
+        map = new mapboxgl.Map({ container: 'map', style: 'mapbox://styles/mapbox/dark-v11', center: CONFIG.centro, zoom: 11.5 });
 
-        const geocoder = new MapboxGeocoder({ accessToken: mapboxgl.accessToken, mapboxgl: mapboxgl, placeholder: 'Destino...', countries: 'br' });
+        const geocoder = new MapboxGeocoder({ accessToken: mapboxgl.accessToken, mapboxgl: mapboxgl, placeholder: 'Para onde?', countries: 'br' });
         map.addControl(geocoder);
         map.addControl(new mapboxgl.GeolocateControl({ trackUserLocation: true, showUserHeading: true }), 'bottom-right');
 
         map.on('load', () => {
-            // Desenha as Manchas (Perigo)
-            DB_LOCAIS.manchas.forEach(m => {
-                map.addSource(m.id, { 'type': 'geojson', 'data': { 'type': 'Feature', 'geometry': { 'type': 'Polygon', 'coordinates': m.coords } } });
-                map.addLayer({ 'id': m.id, 'type': 'fill', 'source': m.id, 'paint': { 'fill-color': m.cor, 'fill-opacity': 0.45 } });
+            // CARREGAR BAIRROS OFICIAIS
+            map.addSource('fortaleza-bairros', { type: 'geojson', data: CONFIG.urlBairros });
+
+            // Pintar Bairros baseado na lista RISCO_BAIRROS
+            map.addLayer({
+                'id': 'camada-bairros',
+                'type': 'fill',
+                'source': 'fortaleza-bairros',
+                'paint': {
+                    'fill-color': [
+                        'match', ['get', 'nome'], 
+                        ...Object.entries(RISCO_BAIRROS).flat(),
+                        'transparent' // Cor padrão se não estiver na lista
+                    ],
+                    'fill-opacity': 0.4
+                }
             });
 
-            // Desenha os Marcadores (🛡️ Apoio)
-            DB_LOCAIS.apoios.forEach(p => {
-                const el = document.createElement('div');
-                el.className = 'marker-apoio';
-                el.innerHTML = '🛡️';
+            // Contorno dos bairros
+            map.addLayer({ 'id': 'contorno-bairros', 'type': 'line', 'source': 'fortaleza-bairros', 'paint': { 'line-color': '#333', 'line-width': 0.5 } });
+
+            // Pontos de Apoio
+            PONTOS_APOIO.forEach(p => {
+                const el = document.createElement('div'); el.className = 'marker-apoio'; el.innerHTML = '🛡️';
                 new mapboxgl.Marker(el).setLngLat(p.coords).setPopup(new mapboxgl.Popup().setHTML(`<b>${p.nome}</b><br>${p.desc}`)).addTo(map);
             });
 
@@ -162,9 +175,7 @@
         });
 
         const calc = async (c) => {
-            const start = `${userLocation[0]},${userLocation[1]}`;
-            const end = `${c.lng || c[0]},${c.lat || c[1]}`;
-            const res = await fetch(`https://api.mapbox.com/directions/v5/mapbox/driving/${start};${end}?geometries=geojson&access_token=${CONFIG.token}`);
+            const res = await fetch(`https://api.mapbox.com/directions/v5/mapbox/driving/${userLocation[0]},${userLocation[1]};${c.lng || c[0]},${c.lat || c[1]}?geometries=geojson&access_token=${CONFIG.token}`);
             const j = await res.json();
             if(j.routes && j.routes[0]) {
                 map.getSource('route').setData({ 'type': 'Feature', 'geometry': j.routes[0].geometry });
@@ -175,7 +186,6 @@
                 document.getElementById('gasto-estimado').innerText = 'R$ ' + custo.toFixed(2);
             }
         };
-
         geocoder.on('result', (e) => calc(e.result.center));
         map.on('click', (e) => calc(e.lngLat));
     }
