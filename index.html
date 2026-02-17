@@ -6,9 +6,9 @@
     <meta name="theme-color" content="#121212">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Minha Rota v15 - FZ25</title>
+    <title>Minha Rota v15 - GPS Inteligente</title>
     
-    <link rel="manifest" href="data:application/manifest+json,{"name":"Minha Rota GPS","short_name":"MinhaRota","start_url":"/index.html","display":"standalone","background_color":"#121212","theme_color":"#e74c3c","icons":[{"src":"https://cdn-icons-png.flaticon.com/512/1673/1673273.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}]}">
+    <link rel="manifest" href="data:application/manifest+json,{"name":"Minha Rota GPS","short_name":"MinhaRota","start_url":".","display":"standalone","background_color":"#121212","theme_color":"#e74c3c","icons":[{"src":"https://cdn-icons-png.flaticon.com/512/1673/1673273.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}]}">
 
     <script src="https://api.mapbox.com/mapbox-gl-js/v3.0.1/mapbox-gl.js"></script>
     <link href="https://api.mapbox.com/mapbox-gl-js/v3.0.1/mapbox-gl.css" rel="stylesheet" />
@@ -20,24 +20,24 @@
         body { margin: 0; padding: 0; background: var(--cor-fundo); font-family: 'Segoe UI', sans-serif; overflow: hidden; color: white; }
         #map { position: absolute; top: 0; bottom: 0; width: 100%; display: none; }
         
-        /* UI Elements */
+        /* UI */
         .float-btn { position: fixed; z-index: 150; background: var(--cor-menu); color: white; border: none; border-radius: 12px; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.4); display: none; }
         #menu-btn { top: 15px; left: 15px; padding: 12px 15px; }
         #panic-btn { bottom: 130px; right: 20px; width: 65px; height: 65px; border-radius: 50%; background: #ff0000; font-size: 28px; animation: pulse 2s infinite; border: 3px solid rgba(255,255,255,0.2); }
-        
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
 
-        #sidebar { position: fixed; top: 0; left: -300px; width: 280px; height: 100%; background: var(--cor-menu); z-index: 200; transition: 0.4s; padding: 25px; box-sizing: border-box; padding-top: 80px; border-right: 1px solid #333; }
+        #sidebar { position: fixed; top: 0; left: -320px; width: 300px; height: 100%; background: var(--cor-menu); z-index: 200; transition: 0.4s; padding: 25px; box-sizing: border-box; padding-top: 80px; border-right: 1px solid #333; overflow-y: auto; }
         #sidebar.active { left: 0; }
 
         #info-card { position: fixed; bottom: 25px; left: 5%; width: 90%; max-width: 400px; background: white; padding: 20px; border-radius: 24px; display: none; z-index: 100; box-shadow: 0 15px 35px rgba(0,0,0,0.4); color: #333; }
         .valor-gasto { color: var(--cor-sucesso); font-size: 28px; font-weight: 800; }
         .btn-acao { width: 100%; padding: 16px; border-radius: 14px; border: none; font-weight: bold; font-size: 16px; cursor: pointer; }
 
-        /* Login & Install */
+        /* Form Estilizado */
+        select, input { width: 100%; padding: 12px; background: #2c2c2c; border: 1px solid #444; border-radius: 8px; color: white; margin-bottom: 15px; font-size: 14px; }
+        label { color: #888; font-size: 11px; text-transform: uppercase; display: block; margin-bottom: 5px; }
+
         #login-screen { position: fixed; width: 100%; height: 100%; background: var(--cor-fundo); display: flex; align-items: center; justify-content: center; z-index: 300; flex-direction: column; }
-        #install-row { display: none; margin-top: 20px; width: 100%; }
-        .btn-install { background: #34495e; color: white; border: 1px solid #5d6d7e; }
     </style>
 </head>
 <body>
@@ -45,13 +45,10 @@
 <div id="login-screen">
     <div style="text-align: center; width: 85%;">
         <h1>Minha Rota v15</h1>
-        <p style="color: #666; margin-bottom: 30px;">Fortaleza - Fazer 250</p>
-        <input type="password" id="group-key" placeholder="Senha do Grupo" style="width: 100%; padding: 18px; border-radius: 12px; background: #1e1e1e; color: white; border: 1px solid #333; text-align: center; margin-bottom: 20px;">
+        <p style="color: #666; margin-bottom: 30px;">FZ25 - Fortaleza Security</p>
+        <input type="password" id="group-key" placeholder="Senha do Grupo" style="text-align: center;">
         <button onclick="App.autenticar()" class="btn-acao" style="background: var(--cor-principal); color: white;">ENTRAR</button>
-        
-        <div id="install-row">
-            <button id="btnInstall" class="btn-acao btn-install">📲 INSTALAR APP NO CELULAR</button>
-        </div>
+        <button id="btnInstall" class="btn-acao" style="background: #34495e; color: white; margin-top: 15px; display: none;">📲 INSTALAR APP</button>
     </div>
 </div>
 
@@ -59,14 +56,28 @@
 <button id="panic-btn" class="float-btn" onclick="App.sos()">🆘</button>
 
 <div id="sidebar">
-    <h3 style="color: var(--cor-principal);">Configs FZ25</h3>
-    <label style="color:#888; font-size:11px;">CONSUMO (km/L)</label>
-    <input type="number" id="v-consumo" value="29" style="width:100%; padding:10px; background:#2c2c2c; color:white; border:none; margin-bottom:15px;">
-    <label style="color:#888; font-size:11px;">GASOLINA (R$)</label>
-    <input type="number" step="0.01" id="v-preco" value="6.15" style="width:100%; padding:10px; background:#2c2c2c; color:white; border:none; margin-bottom:15px;">
-    <button onclick="App.salvarConfig()" class="btn-acao" style="background: var(--cor-sucesso); color: white;">SALVAR</button>
-    <br><br>
-    <button onclick="App.logout()" style="color:#e74c3c; background:none; border:1px solid #e74c3c; width:100%; padding:10px; border-radius:8px; cursor:pointer;">SAIR</button>
+    <h3 style="color: var(--cor-principal); margin-bottom: 25px;">Configurações de Veículo</h3>
+    
+    <label>Montadora</label>
+    <select id="sel-montadora" onchange="App.atualizarModelos()">
+        <option value="">Selecione...</option>
+        <option value="yamaha">Yamaha</option>
+        <option value="honda">Honda</option>
+    </select>
+
+    <label>Modelo</label>
+    <select id="sel-modelo" onchange="App.aplicarConsumo()">
+        <option value="">Selecione a montadora primeiro</option>
+    </select>
+
+    <label>Consumo Médio (km/L)</label>
+    <input type="number" id="v-consumo" value="29">
+
+    <label>Preço Gasolina (R$)</label>
+    <input type="number" step="0.01" id="v-preco" value="6.15">
+
+    <button onclick="App.salvarConfig()" class="btn-acao" style="background: var(--cor-sucesso); color: white;">SALVAR CONFIGS</button>
+    <button onclick="App.logout()" style="color:#e74c3c; background:none; border:none; width:100%; margin-top:20px; cursor:pointer;">SAIR</button>
 </div>
 
 <div id="map"></div>
@@ -81,34 +92,22 @@
 </div>
 
 <script>
-    // Lógica de Instalação (PWA)
-    let deferredPrompt;
-    window.addEventListener('beforeinstallprompt', (e) => {
-        e.preventDefault();
-        deferredPrompt = e;
-        document.getElementById('install-row').style.display = 'block';
-    });
+    // Registro SW e Instalação PWA
+    let installPrompt;
+    window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); installPrompt = e; document.getElementById('btnInstall').style.display = 'block'; });
+    document.getElementById('btnInstall').addEventListener('click', async () => { if(installPrompt) { installPrompt.prompt(); installPrompt = null; } });
+    if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js');
 
-    document.getElementById('btnInstall').addEventListener('click', async () => {
-        if (deferredPrompt) {
-            deferredPrompt.prompt();
-            const { outcome } = await deferredPrompt.userChoice;
-            if (outcome === 'accepted') document.getElementById('install-row').style.display = 'none';
-            deferredPrompt = null;
-        }
-    });
-
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register('./sw.js').then(reg => console.log('SW ativo!'));
-        });
-    }
+    const VEICULOS = {
+        yamaha: { 'Fazer 250 (FZ25)': 29, 'MT-03': 22, 'Lander 250': 30 },
+        honda: { 'CB 300F Twister': 32, 'XRE 300': 27, 'Bros 160': 40 }
+    };
 
     const CONFIG = {
         token: 'pk.eyJ1Ijoid2V2ZXJzb25mIiwiYSI6ImNtbHF5bmh1YTA0djgzZHB4dTJpaG9rbHgifQ.jo3DG631F030AxG_nFKVEQ',
         chave: 'FZ25-FOR',
         urlBairros: 'https://raw.githubusercontent.com/fititnt/gis-dataset-brasil/master/municipio/ce/fortaleza/bairros.geojson',
-        risco: { 'CENTRO': '#ff0000', 'MESSEJANA': '#ff0000', 'JANGURUSSU': '#ff0000', 'BARRA DO CEARÁ': '#ff0000', 'BOM JARDIM': '#ff0000', 'VILA VELHA': '#ff0000', 'PARANGABA': '#ffa500' }
+        risco: { 'CENTRO': '#ff0000', 'MESSEJANA': '#ff0000', 'JANGURUSSU': '#ff0000', 'BARRA DO CEARÁ': '#ff0000', 'BOM JARDIM': '#ff0000', 'PARANGABA': '#ffa500' }
     };
 
     const App = {
@@ -133,6 +132,20 @@
             this.carregarMapa();
         },
 
+        atualizarModelos() {
+            const mont = document.getElementById('sel-montadora').value;
+            const selModel = document.getElementById('sel-modelo');
+            selModel.innerHTML = '<option value="">Escolha o modelo...</option>';
+            if(mont && VEICULOS[mont]) {
+                Object.keys(VEICULOS[mont]).forEach(m => { selModel.innerHTML += `<option value="${VEICULOS[mont][m]}">${m}</option>`; });
+            }
+        },
+
+        aplicarConsumo() {
+            const cons = document.getElementById('sel-modelo').value;
+            if(cons) document.getElementById('v-consumo').value = cons;
+        },
+
         carregarMapa() {
             mapboxgl.accessToken = CONFIG.token;
             this.map = new mapboxgl.Map({ container: 'map', style: 'mapbox://styles/mapbox/dark-v11', center: this.userLoc, zoom: 12 });
@@ -143,9 +156,7 @@
 
             geolocate.on('geolocate', (e) => {
                 this.userLoc = [e.coords.longitude, e.coords.latitude];
-                if(this.modoGPS) {
-                    this.map.easeTo({ center: this.userLoc, bearing: e.coords.heading || 0, duration: 1000 });
-                }
+                if(this.modoGPS) this.map.easeTo({ center: this.userLoc, bearing: e.coords.heading || 0, duration: 1000 });
                 this.checkRisco();
             });
 
@@ -153,10 +164,7 @@
                 this.map.addSource('bairros', { type: 'geojson', data: CONFIG.urlBairros });
                 this.map.addLayer({
                     'id': 'camada-bairros', 'type': 'fill', 'source': 'bairros',
-                    'paint': { 
-                        'fill-color': ['match', ['upcase', ['get', 'nome']], ...Object.entries(CONFIG.risco).flat(), 'transparent'],
-                        'fill-opacity': 0.45 
-                    }
+                    'paint': { 'fill-color': ['match', ['upcase', ['get', 'nome']], ...Object.entries(CONFIG.risco).flat(), 'transparent'], 'fill-opacity': 0.45 }
                 });
                 this.map.addSource('route', { 'type': 'geojson', 'data': { 'type': 'Feature', 'geometry': { 'type': 'LineString', 'coordinates': [] } } });
                 this.map.addLayer({ 'id': 'route-line', 'type': 'line', 'source': 'route', 'paint': { 'line-color': '#3498db', 'line-width': 8 } });
@@ -178,32 +186,33 @@
             }
         },
 
-        iniciarGPS() {
-            this.modoGPS = true;
-            document.getElementById('info-card').style.display = 'none';
-            this.map.flyTo({ center: this.userLoc, zoom: 17, pitch: 60 });
-        },
+        iniciarGPS() { this.modoGPS = true; document.getElementById('info-card').style.display = 'none'; this.map.flyTo({ center: this.userLoc, zoom: 17, pitch: 60 }); },
 
         checkRisco() {
             const f = this.map.queryRenderedFeatures(this.map.project(this.userLoc), { layers: ['camada-bairros'] });
             if (f.length > 0) {
                 const b = f[0].properties.nome.toUpperCase();
                 if (CONFIG.risco[b] && b !== this.ultimoBairro) {
-                    window.speechSynthesis.speak(new SpeechSynthesisUtterance(`Alerta: ${b} é área de risco.`));
+                    window.speechSynthesis.speak(new SpeechSynthesisUtterance(`Alerta: ${b} é zona de risco.`));
                     this.ultimoBairro = b;
                 }
             }
         },
 
-        sos() { window.open(`https://wa.me/?text=SOS! Localização: http://maps.google.com/maps?q=${this.userLoc[1]},${this.userLoc[0]}`); },
+        sos() { window.open(`https://wa.me/?text=SOS FZ25! Localização: http://google.com/maps?q=${this.userLoc[1]},${this.userLoc[0]}`); },
         toggleMenu() { document.getElementById('sidebar').classList.toggle('active'); },
-        salvarConfig() { localStorage.setItem('cfg_c', document.getElementById('v-consumo').value); this.toggleMenu(); alert("Salvo!"); },
+        salvarConfig() { 
+            localStorage.setItem('cfg_c', document.getElementById('v-consumo').value); 
+            localStorage.setItem('cfg_p', document.getElementById('v-preco').value); 
+            localStorage.setItem('cfg_mont', document.getElementById('sel-montadora').value);
+            this.toggleMenu(); alert("Configurações Salvas!"); 
+        },
         carregarCache() {
             if(localStorage.getItem('cfg_c')) document.getElementById('v-consumo').value = localStorage.getItem('cfg_c');
+            if(localStorage.getItem('cfg_mont')) { document.getElementById('sel-montadora').value = localStorage.getItem('cfg_mont'); this.atualizarModelos(); }
         },
         logout() { localStorage.clear(); location.reload(); }
     };
-
     window.onload = () => App.init();
 </script>
 </body>
