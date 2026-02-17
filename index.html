@@ -3,47 +3,64 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Minha Rota v11</title>
+    <meta name="theme-color" content="#121212">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>Minha Rota v12 - GPS FZ25</title>
+    
+    <link rel="manifest" href="data:application/manifest+json,{"name":"Minha Rota","short_name":"MinhaRota","start_url":".","display":"standalone","background_color":"#121212","theme_color":"#e74c3c"}">
+
     <script src="https://api.mapbox.com/mapbox-gl-js/v3.0.1/mapbox-gl.js"></script>
     <link href="https://api.mapbox.com/mapbox-gl-js/v3.0.1/mapbox-gl.css" rel="stylesheet" />
     <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.0.0/mapbox-gl-geocoder.min.js"></script>
     <link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.0.0/mapbox-gl-geocoder.css" type="text/css">
+
     <style>
         :root { --cor-principal: #e74c3c; --cor-fundo: #121212; --cor-menu: #1e1e1e; }
         body { margin: 0; padding: 0; background: var(--cor-fundo); font-family: 'Segoe UI', sans-serif; overflow: hidden; }
         #map { position: absolute; top: 0; bottom: 0; width: 100%; display: none; }
-        #menu-btn { position: fixed; top: 15px; left: 15px; z-index: 150; background: var(--cor-menu); color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; display: none; }
-        #panic-btn { position: fixed; bottom: 120px; right: 15px; width: 60px; height: 60px; border-radius: 50%; background: #ff0000; font-size: 24px; color: white; border: none; z-index: 100; display: none; animation: pulse 2s infinite; }
+        
+        /* Botões */
+        .float-btn { position: fixed; z-index: 150; background: var(--cor-menu); color: white; border: none; border-radius: 8px; cursor: pointer; box-shadow: 0 2px 10px rgba(0,0,0,0.5); }
+        #menu-btn { top: 15px; left: 15px; padding: 12px; display: none; }
+        #panic-btn { bottom: 120px; right: 15px; width: 60px; height: 60px; border-radius: 50%; background: #ff0000; font-size: 24px; color: white; display: none; animation: pulse 2s infinite; }
+        
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+
+        /* Menu */
         #sidebar { position: fixed; top: 0; left: -280px; width: 280px; height: 100%; background: var(--cor-menu); color: white; z-index: 160; transition: 0.3s; padding: 20px; box-sizing: border-box; padding-top: 75px; }
         #sidebar.active { left: 0; }
+
+        /* Card de Rota */
         #info-card { position: fixed; bottom: 25px; left: 5%; width: 90%; background: white; padding: 20px; border-radius: 20px; display: none; z-index: 50; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         .valor-gasto { color: #27ae60; font-size: 24px; font-weight: bold; }
-        #login-screen { position: fixed; width: 100%; height: 100%; background: var(--cor-fundo); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 200; }
-        .btn-acao { padding: 15px; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; width: 100%; margin-top: 10px; }
+        .btn-gps { background: #27ae60; color: white; border: none; padding: 15px; border-radius: 12px; width: 100%; font-weight: bold; margin-top: 10px; font-size: 16px; }
+
+        #login-screen { position: fixed; width: 100%; height: 100%; background: var(--cor-fundo); display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; z-index: 200; }
     </style>
 </head>
 <body>
 
 <div id="login-screen">
-    <div style="text-align: center; width: 85%; color: white;">
-        <h1>Minha Rota v11</h1>
-        <input type="password" id="group-key" placeholder="Senha FZ25" style="padding: 18px; border-radius: 12px; width: 100%; background: #1e1e1e; color: white; text-align: center; border: 1px solid #333; margin-bottom: 15px;">
-        <button onclick="checkKey()" class="btn-acao" style="background: var(--cor-principal); color: white;">ENTRAR</button>
+    <div style="text-align: center; width: 85%;">
+        <h1 style="margin-bottom: 5px;">Minha Rota v12</h1>
+        <p style="color: #888; margin-bottom: 30px;">FZ25 Security Edition</p>
+        <input type="password" id="group-key" placeholder="Senha do Grupo" style="padding: 18px; border-radius: 12px; width: 100%; background: #1e1e1e; color: white; text-align: center; border: 1px solid #333; margin-bottom: 15px;">
+        <button onclick="checkKey()" style="padding: 18px; background: var(--cor-principal); color: white; border: none; border-radius: 12px; font-weight: bold; width: 100%;">ENTRAR NO MAPA</button>
     </div>
 </div>
 
-<button id="menu-btn" onclick="toggleMenu()">☰</button>
-<button id="panic-btn" onclick="dispararSOS()">🆘</button>
+<button id="menu-btn" class="float-btn" onclick="toggleMenu()">☰</button>
+<button id="panic-btn" class="float-btn" onclick="dispararSOS()">🆘</button>
 
 <div id="sidebar">
-    <h3>Configurações</h3>
-    <label>Consumo (km/L)</label>
-    <input type="number" id="v-consumo" value="29" style="width:100%; padding:8px; margin-bottom:15px;">
-    <label>Preço Gasolina</label>
-    <input type="number" step="0.01" id="v-preco" value="6.15" style="width:100%; padding:8px; margin-bottom:15px;">
-    <button onclick="saveConfigs()" class="btn-acao" style="background:#27ae60; color:white;">SALVAR</button>
-    <button onclick="logout()" class="btn-acao" style="background:transparent; color:#e74c3c; border:1px solid #e74c3c;">SAIR</button>
+    <h3>Ajustes FZ25</h3>
+    <label style="font-size: 11px; color: #888;">Consumo (km/L)</label>
+    <input type="number" id="v-consumo" value="29" style="width:100%; padding:10px; margin-bottom:15px; background:#2c2c2c; color:white; border:none;">
+    <label style="font-size: 11px; color: #888;">Preço Gasolina (R$)</label>
+    <input type="number" step="0.01" id="v-preco" value="6.15" style="width:100%; padding:10px; margin-bottom:20px; background:#2c2c2c; color:white; border:none;">
+    <button onclick="saveConfigs()" style="background:#27ae60; color:white; border:none; width:100%; padding:12px; border-radius:8px; font-weight:bold;">SALVAR</button>
+    <br><br>
+    <button onclick="logout()" style="background:none; border:1px solid #e74c3c; color:#e74c3c; width:100%; padding:10px; border-radius:8px;">LOGOUT</button>
 </div>
 
 <div id="map"></div>
@@ -54,7 +71,7 @@
         <button onclick="document.getElementById('info-card').style.display='none'" style="border: none; background: none; font-size: 20px;">×</button>
     </div>
     <div id="gasto-estimado" class="valor-gasto">R$ 0,00</div>
-    <button id="btn-ir" class="btn-acao" style="background: #27ae60; color: white;" onclick="iniciarGPS()">INICIAR GPS</button>
+    <button class="btn-gps" onclick="ativarNavegacao()">INICIAR GPS</button>
 </div>
 
 <script>
@@ -62,34 +79,30 @@
         token: 'pk.eyJ1Ijoid2V2ZXJzb25mIiwiYSI6ImNtbHF5bmh1YTA0djgzZHB4dTJpaG9rbHgifQ.jo3DG631F030AxG_nFKVEQ',
         chaveAcesso: 'FZ25-FOR',
         centro: [-38.5267, -3.7319],
-        // GeoJSON alternativo com nomes padronizados
+        // GeoJSON oficial dos bairros de Fortaleza
         urlBairros: 'https://raw.githubusercontent.com/fititnt/gis-dataset-brasil/master/municipio/ce/fortaleza/bairros.geojson'
     };
 
-    // Nomes baseados no padrão do GeoJSON oficial de Fortaleza
+    // Bairros Críticos baseados nas AIS com maiores índices de CVP/Furto
     const RISCO_BAIRROS = {
-        'CENTRO': '#ff0000',
-        'MESSEJANA': '#ff0000',
-        'JANGURUSSU': '#ff0000',
-        'BARRA DO CEARÁ': '#ff0000',
-        'BOM JARDIM': '#ff0000',
-        'PARANGABA': '#ffa500',
-        'PASSARÉ': '#ffa500',
-        'ALDEOTA': '#ffa500'
+        'CENTRO': '#ff0000', 'MESSEJANA': '#ff0000', 'JANGURUSSU': '#ff0000',
+        'BARRA DO CEARÁ': '#ff0000', 'BOM JARDIM': '#ff0000', 'VILA VELHA': '#ff0000',
+        'PARANGABA': '#ffa500', 'PASSARÉ': '#ffa500', 'MONDUBIM': '#ffa500', 'ALDEOTA': '#ffa500'
     };
 
-    let map, userLocation = CONFIG.centro;
+    let userLocation = CONFIG.centro;
+    let map, modoGPS = false, ultimoBairro = "";
 
     window.onload = () => {
         if (localStorage.getItem('minha_rota_key') === CONFIG.chaveAcesso) iniciarApp();
-        carregarConfig();
+        if (localStorage.getItem('v_consumo')) document.getElementById('v-consumo').value = localStorage.getItem('v_consumo');
     };
 
     function checkKey() {
         if(document.getElementById('group-key').value === CONFIG.chaveAcesso) {
             localStorage.setItem('minha_rota_key', CONFIG.chaveAcesso);
             iniciarApp();
-        } else { alert('Erro!'); }
+        } else { alert('Chave Inválida'); }
     }
 
     function iniciarApp() {
@@ -106,40 +119,45 @@
         localStorage.setItem('v_preco', document.getElementById('v-preco').value);
         location.reload();
     }
-    function carregarConfig() {
-        if(localStorage.getItem('v_consumo')) document.getElementById('v-consumo').value = localStorage.getItem('v_consumo');
-        if(localStorage.getItem('v_preco')) document.getElementById('v-preco').value = localStorage.getItem('v_preco');
-    }
     function logout() { localStorage.clear(); location.reload(); }
 
     function dispararSOS() {
-        const msg = encodeURIComponent(`🚨 SOS! Localização: https://www.google.com/maps?q=${userLocation[1]},${userLocation[0]}`);
+        const msg = encodeURIComponent(`🚨 EMERGÊNCIA FZ25! Localização atual: https://www.google.com/maps?q=${userLocation[1]},${userLocation[0]}`);
         window.open(`https://wa.me/?text=${msg}`);
     }
 
-    function iniciarGPS() {
-        map.easeTo({ zoom: 16, pitch: 50 });
+    function ativarNavegacao() {
+        modoGPS = true;
         document.getElementById('info-card').style.display = 'none';
-        window.speechSynthesis.speak(new SpeechSynthesisUtterance("Navegação iniciada. Fique atento às zonas de risco."));
+        map.flyTo({ center: userLocation, zoom: 17, pitch: 60, speed: 0.8 });
+        window.speechSynthesis.speak(new SpeechSynthesisUtterance("Modo GPS ativo. Pilotagem monitorada."));
     }
 
     function initMap() {
         mapboxgl.accessToken = CONFIG.token;
-        map = new mapboxgl.Map({ container: 'map', style: 'mapbox://styles/mapbox/dark-v11', center: CONFIG.centro, zoom: 11 });
+        map = new mapboxgl.Map({ container: 'map', style: 'mapbox://styles/mapbox/dark-v11', center: CONFIG.centro, zoom: 12 });
 
         const geocoder = new MapboxGeocoder({ accessToken: mapboxgl.accessToken, mapboxgl: mapboxgl, placeholder: 'Destino...', countries: 'br' });
         map.addControl(geocoder);
         
-        const geolocate = new mapboxgl.GeolocateControl({ trackUserLocation: true, showUserHeading: true });
+        const geolocate = new mapboxgl.GeolocateControl({ positionOptions: { enableHighAccuracy: true }, trackUserLocation: true, showUserHeading: true });
         map.addControl(geolocate, 'bottom-right');
 
         geolocate.on('geolocate', (e) => {
             userLocation = [e.coords.longitude, e.coords.latitude];
+            
+            if(modoGPS) {
+                map.setCenter(userLocation);
+                if(e.coords.heading) map.setBearing(e.coords.heading);
+            }
+
+            // Sensor de Bairro em Tempo Real
             const features = map.queryRenderedFeatures(map.project(userLocation), { layers: ['camada-bairros'] });
             if (features.length > 0) {
                 const b = features[0].properties.nome.toUpperCase();
-                if (RISCO_BAIRROS[b]) {
+                if (RISCO_BAIRROS[b] && b !== ultimoBairro) {
                     window.speechSynthesis.speak(new SpeechSynthesisUtterance(`Alerta: Bairro ${b} é zona de risco.`));
+                    ultimoBairro = b;
                 }
             }
         });
@@ -147,30 +165,38 @@
         map.on('load', () => {
             map.addSource('bairros-src', { type: 'geojson', data: CONFIG.urlBairros });
             
+            // Camada de Pintura dos Bairros (Manchas)
             map.addLayer({
                 'id': 'camada-bairros', 'type': 'fill', 'source': 'bairros-src',
                 'paint': {
                     'fill-color': ['match', ['upcase', ['get', 'nome']], ...Object.entries(RISCO_BAIRROS).flat(), 'transparent'],
-                    'fill-opacity': 0.5
+                    'fill-opacity': 0.45
                 }
             });
 
-            map.addLayer({ 'id': 'contorno', 'type': 'line', 'source': 'bairros-src', 'paint': { 'line-color': '#fff', 'line-width': 0.2 } });
+            // Contorno fino para visualização melhor
+            map.addLayer({ 'id': 'contorno', 'type': 'line', 'source': 'bairros-src', 'paint': { 'line-color': '#444', 'line-width': 0.5 } });
+
+            // Marcador de Apoio (Fixo)
+            const el = document.createElement('div'); el.style.fontSize = '30px'; el.innerHTML = '🛡️';
+            new mapboxgl.Marker(el).setLngLat([-38.489, -3.732]).setPopup(new mapboxgl.Popup().setHTML("🛡️ Posto Seguro")).addTo(map);
 
             map.addSource('route', { 'type': 'geojson', 'data': { 'type': 'Feature', 'geometry': { 'type': 'LineString', 'coordinates': [] } } });
-            map.addLayer({ 'id': 'route-line', 'type': 'line', 'source': 'route', 'paint': { 'line-color': '#3498db', 'line-width': 6 } });
+            map.addLayer({ 'id': 'route-line', 'type': 'line', 'source': 'route', 'paint': { 'line-color': '#3498db', 'line-width': 7, 'line-opacity': 0.8 } });
         });
 
         const calc = async (c) => {
-            const res = await fetch(`https://api.mapbox.com/directions/v5/mapbox/driving/${userLocation[0]},${userLocation[1]};${c.lng || c[0]},${c.lat || c[1]}?geometries=geojson&access_token=${CONFIG.token}`);
+            const dest = [c.lng || c[0], c.lat || c[1]];
+            const res = await fetch(`https://api.mapbox.com/directions/v5/mapbox/driving/${userLocation[0]},${userLocation[1]};${dest[0]},${dest[1]}?geometries=geojson&access_token=${CONFIG.token}`);
             const j = await res.json();
             if(j.routes && j.routes[0]) {
                 map.getSource('route').setData({ 'type': 'Feature', 'geometry': j.routes[0].geometry });
                 const d = (j.routes[0].distance/1000).toFixed(1);
                 const custo = (d / document.getElementById('v-consumo').value) * document.getElementById('v-preco').value;
                 document.getElementById('info-card').style.display = 'block';
-                document.getElementById('rota-distancia').innerText = d + ' km';
+                document.getElementById('rota-distancia').innerText = d + ' km percorridos';
                 document.getElementById('gasto-estimado').innerText = 'R$ ' + custo.toFixed(2);
+                destinoAtual = dest;
             }
         };
         geocoder.on('result', (e) => calc(e.result.center));
