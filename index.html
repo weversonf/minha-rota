@@ -4,12 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <link rel="manifest" href="manifest.json">
-    <title>Minha Rota v02</title>
+    <title>Minha Rota v03</title>
     <script src="https://api.mapbox.com/mapbox-gl-js/v3.0.1/mapbox-gl.js"></script>
     <link href="https://api.mapbox.com/mapbox-gl-js/v3.0.1/mapbox-gl.css" rel="stylesheet" />
     <style>
         :root { --cor-principal: #e74c3c; --cor-fundo: #121212; }
-        body { margin: 0; padding: 0; background: var(--cor-fundo); font-family: 'Segoe UI', sans-serif; overflow: hidden; }
+        body { margin: 0; padding: 0; background: var(--cor-fundo); font-family: 'Segoe UI', Roboto, sans-serif; overflow: hidden; }
         #map { position: absolute; top: 0; bottom: 0; width: 100%; display: none; }
         
         /* Tela de Login */
@@ -27,7 +27,7 @@
             border-radius: 12px; font-weight: bold; width: 100%; font-size: 16px; cursor: pointer;
         }
 
-        /* Card de Informações */
+        /* Card de Informações Inferior */
         #info-card {
             position: fixed; bottom: 25px; left: 5%; width: 90%; background: rgba(255,255,255,0.98); 
             padding: 20px; border-radius: 20px; display: none; z-index: 50; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
@@ -43,7 +43,7 @@
 
 <div id="login-screen">
     <div class="login-card">
-        <h1>Minha Rota</h1>
+        <h1>Minha Rota v03</h1>
         <p style="color: #888; margin-bottom: 30px;">Segurança e Economia para sua FZ25</p>
         <input type="password" id="group-key" placeholder="Chave do Grupo" autocomplete="off">
         <button onclick="checkKey()">ENTRAR</button>
@@ -55,10 +55,10 @@
 <div id="info-card">
     <div style="display: flex; justify-content: space-between;">
         <div>
-            <div id="rota-distancia" style="font-weight: bold; color: #333; font-size: 16px;">Selecione um destino</div>
+            <div id="rota-distancia" style="font-weight: bold; color: #333; font-size: 16px;">Traçando rota...</div>
             <div class="detalhe-rota">FZ25 2023 | 29km/L</div>
         </div>
-        <button onclick="document.getElementById('info-card').style.display='none'" style="background: none; border: none; color: #999; font-size: 20px;">×</button>
+        <button onclick="document.getElementById('info-card').style.display='none'" style="background: none; border: none; color: #999; font-size: 24px; cursor: pointer;">×</button>
     </div>
     <div class="valor-gasto" id="gasto-estimado">R$ 0,00</div>
 </div>
@@ -67,9 +67,9 @@
     const CONFIG = {
         token: 'pk.eyJ1Ijoid2V2ZXJzb25mIiwiYSI6ImNtbHF5bmh1YTA0djgzZHB4dTJpaG9rbHgifQ.jo3DG631F030AxG_nFKVEQ',
         chaveAcesso: 'FZ25-FOR',
-        veiculo: { consumo: 29 }, 
+        veiculo: { consumo: 29 }, // Fazer 250 faz 29km/L
         precoCombustivel: 6.15, 
-        centroInicial: [-38.5267, -3.7319] // Fortaleza
+        centroInicial: [-38.5267, -3.7319] // Fortaleza, Ceará
     };
 
     const bancoDados = {
@@ -84,8 +84,20 @@
     let userLocation = CONFIG.centroInicial;
     let map;
 
+    // --- MANTER LOGADO ---
+    window.onload = function() {
+        const chaveSalva = localStorage.getItem('minha_rota_key');
+        if (chaveSalva === CONFIG.chaveAcesso) {
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('map').style.display = 'block';
+            initMap();
+        }
+    };
+
     function checkKey() {
-        if(document.getElementById('group-key').value === CONFIG.chaveAcesso) {
+        const inputKey = document.getElementById('group-key').value;
+        if(inputKey === CONFIG.chaveAcesso) {
+            localStorage.setItem('minha_rota_key', inputKey);
             document.getElementById('login-screen').style.display = 'none';
             document.getElementById('map').style.display = 'block';
             initMap();
