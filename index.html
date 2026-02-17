@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <link rel="manifest" href="manifest.json">
-    <title>Minha Rota v05</title>
+    <title>Minha Rota v06</title>
     
     <script src="https://api.mapbox.com/mapbox-gl-js/v3.0.1/mapbox-gl.js"></script>
     <link href="https://api.mapbox.com/mapbox-gl-js/v3.0.1/mapbox-gl.css" rel="stylesheet" />
@@ -16,7 +16,6 @@
         body { margin: 0; padding: 0; background: var(--cor-fundo); font-family: 'Segoe UI', sans-serif; overflow: hidden; }
         #map { position: absolute; top: 0; bottom: 0; width: 100%; display: none; }
         
-        /* Menu Hambúrguer Retrátil */
         #menu-btn {
             position: fixed; top: 15px; left: 15px; z-index: 130;
             background: var(--cor-menu); color: white; border: none;
@@ -45,13 +44,14 @@
 
         #info-card { position: fixed; bottom: 25px; left: 5%; width: 90%; background: white; padding: 20px; border-radius: 20px; display: none; z-index: 50; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         .valor-gasto { color: #27ae60; font-size: 24px; font-weight: bold; }
+        .marker-icon { font-size: 24px; cursor: pointer; text-shadow: 0 0 5px rgba(0,0,0,0.5); }
     </style>
 </head>
 <body>
 
 <div id="login-screen">
     <div class="login-card">
-        <h1>Minha Rota v05</h1>
+        <h1>Minha Rota v06</h1>
         <input type="password" id="group-key" placeholder="Chave do Grupo">
         <button onclick="checkKey()">ENTRAR</button>
     </div>
@@ -99,18 +99,17 @@
         centroInicial: [-38.5267, -3.7319]
     };
 
-    // --- BANCO DE DADOS DE SEGURANÇA E APOIO ---
     const DB_LOCAIS = {
         areasRisco: [
-            {
-                id: 'centro-perigo',
-                nome: 'Centro - Área de Risco',
-                coords: [[[-38.540, -3.720], [-38.525, -3.720], [-38.525, -3.730], [-38.540, -3.730], [-38.540, -3.720]]]
-            }
+            { id: 'centro', nome: 'Centro', coords: [[[-38.540, -3.720], [-38.525, -3.720], [-38.525, -3.730], [-38.540, -3.730], [-38.540, -3.720]]] },
+            { id: 'area2', nome: 'Área Perigosa 2', coords: [[[-38.510, -3.710], [-38.500, -3.710], [-38.500, -3.720], [-38.510, -3.720], [-38.510, -3.710]]] }
         ],
         pontosApoio: [
-            { nome: 'Posto Shell 24h', coords: [-38.4891, -3.7327], desc: 'Conveniência e Iluminação 24h' },
-            { nome: 'Base Policial Aldeota', coords: [-38.5100, -3.7500], desc: 'Segurança e apoio' }
+            { nome: 'Posto Shell 24h', coords: [-38.4891, -3.7327], desc: '🛡️ Conveniência 24h' },
+            { nome: 'Base PM Aldeota', coords: [-38.5100, -3.7500], desc: '🛡️ Segurança' }
+        ],
+        pontosRisco: [
+            { nome: 'Ponto de Atenção', coords: [-38.5200, -3.7400], desc: '⚠️ Alto índice de assaltos' }
         ]
     };
 
@@ -173,17 +172,31 @@
         geolocate.on('geolocate', (e) => { userLocation = [e.coords.longitude, e.coords.latitude]; });
 
         map.on('load', () => {
-            // Renderiza Áreas de Risco (Polígonos)
+            // Renderiza Manchas Vermelhas (Polígonos)
             DB_LOCAIS.areasRisco.forEach((area) => {
                 map.addSource(area.id, { 'type': 'geojson', 'data': { 'type': 'Feature', 'geometry': { 'type': 'Polygon', 'coordinates': area.coords } } });
-                map.addLayer({ 'id': area.id, 'type': 'fill', 'source': area.id, 'paint': { 'fill-color': '#ff0000', 'fill-opacity': 0.35 } });
+                map.addLayer({ 'id': area.id, 'type': 'fill', 'source': area.id, 'paint': { 'fill-color': '#ff0000', 'fill-opacity': 0.45 } });
             });
 
-            // Renderiza Pontos de Apoio (Marcadores)
+            // Marcadores de Apoio (🛡️)
             DB_LOCAIS.pontosApoio.forEach(ponto => {
-                new mapboxgl.Marker({ color: '#3498db' })
+                const el = document.createElement('div');
+                el.className = 'marker-icon';
+                el.innerHTML = '🛡️';
+                new mapboxgl.Marker(el)
                     .setLngLat(ponto.coords)
-                    .setPopup(new mapboxgl.Popup().setHTML(`<b>${ponto.nome}</b><br>${ponto.desc}`))
+                    .setPopup(new mapboxgl.Popup({ offset: 25 }).setHTML(`<b>${ponto.nome}</b><br>${ponto.desc}`))
+                    .addTo(map);
+            });
+
+            // Marcadores de Risco Específicos (⚠️)
+            DB_LOCAIS.pontosRisco.forEach(ponto => {
+                const el = document.createElement('div');
+                el.className = 'marker-icon';
+                el.innerHTML = '⚠️';
+                new mapboxgl.Marker(el)
+                    .setLngLat(ponto.coords)
+                    .setPopup(new mapboxgl.Popup({ offset: 25 }).setHTML(`<b>${ponto.nome}</b><br>${ponto.desc}`))
                     .addTo(map);
             });
 
