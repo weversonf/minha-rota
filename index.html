@@ -6,50 +6,38 @@
     <meta name="theme-color" content="#121212">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Minha Rota v22 - FZ25 Edition</title>
+    <title>Minha Rota v22 - OpenSearch Edition</title>
     
-    <link rel="manifest" href='data:application/manifest+json,{"name":"Minha Rota GPS","short_name":"MinhaRota","start_url":"index.html","display":"standalone","background_color":"#121212","theme_color":"#e74c3c","icons":[{"src":"https://cdn-icons-png.flaticon.com/512/1673/1673273.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}]}'>
+    <link rel="manifest" href='data:application/manifest+json,{"name":"Minha Rota GPS","short_name":"MinhaRota","start_url":"index.html","display":"standalone","background_color":"#121212","theme_color":"#e74c3c","icons":[{"src":"https://cdn-icons-png.flaticon.com/512/1673/1673273.png","sizes":"512x512","type":"image/png"}]}'>
 
     <script src="https://api.mapbox.com/mapbox-gl-js/v3.0.1/mapbox-gl.js"></script>
     <link href="https://api.mapbox.com/mapbox-gl-js/v3.0.1/mapbox-gl.css" rel="stylesheet" />
-    <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.0.0/mapbox-gl-geocoder.min.js"></script>
-    <link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.0.0/mapbox-gl-geocoder.css" type="text/css">
 
     <style>
         :root { --cor-principal: #e74c3c; --cor-fundo: #121212; --cor-ui: rgba(30, 30, 30, 0.98); --cor-sucesso: #2ecc71; }
         body { margin: 0; padding: 0; background: var(--cor-fundo); font-family: 'Segoe UI', sans-serif; overflow: hidden; color: white; }
         
-        /* CABEÇALHO FIXO */
         #app-header { position: fixed; top: 0; left: 0; width: 100%; height: 60px; background: #1a1a1a; z-index: 300; display: none; align-items: center; justify-content: space-between; padding: 0 15px; box-sizing: border-box; border-bottom: 1px solid #333; }
-        #app-header h1 { font-size: 16px; margin: 0; color: var(--cor-principal); font-weight: 800; letter-spacing: 1px; }
-        .btn-header { background: none; border: none; color: white; font-size: 24px; cursor: pointer; }
-
+        #app-header h1 { font-size: 16px; margin: 0; color: var(--cor-principal); font-weight: 800; }
+        
         #map { position: absolute; top: 60px; bottom: 0; width: 100%; display: none; }
         
-        /* BUSCA (Abaixo do Header) */
+        /* BUSCA CUSTOMIZADA (ESTILO GOOGLE MAPS) */
         #nav-header { position: fixed; top: 70px; left: 10px; right: 10px; z-index: 200; display: none; flex-direction: column; gap: 8px; }
-        .search-box { background: var(--cor-ui); border-radius: 12px; border: 1px solid #444; overflow: hidden; }
+        .search-container { background: var(--cor-ui); border-radius: 12px; border: 1px solid #444; position: relative; }
+        .search-input { width: 100%; background: transparent; border: none; padding: 15px; color: white; font-size: 16px; box-sizing: border-box; outline: none; }
+        .suggestions { position: absolute; top: 100%; left: 0; width: 100%; background: #1a1a1a; border: 1px solid #444; border-top: none; display: none; max-height: 200px; overflow-y: auto; border-radius: 0 0 12px 12px; }
+        .suggestion-item { padding: 12px; border-bottom: 1px solid #333; cursor: pointer; font-size: 14px; }
+        .suggestion-item:last-child { border: none; }
 
-        /* Estilo da Busca Local */
-        .mapboxgl-ctrl-geocoder { width: 100% !important; max-width: none !important; background: transparent; box-shadow: none; }
-        .mapboxgl-ctrl-geocoder--input { color: white !important; padding: 12px 45px !important; }
-        .mapboxgl-ctrl-geocoder--suggestions { background: #1a1a1a !important; color: white !important; border: 1px solid #444 !important; }
-
-        /* Sidebar & Veículo */
+        /* Sidebar, Status, Seta e Botões permanecem os mesmos da v21 */
         #sidebar { position: fixed; top: 0; left: -320px; width: 300px; height: 100%; background: #1a1a1a; z-index: 400; transition: 0.4s; padding: 25px; box-sizing: border-box; padding-top: 80px; border-right: 1px solid #333; }
         #sidebar.active { left: 0; }
-        select, input { width: 100%; padding: 12px; background: #2c2c2c; border: 1px solid #444; border-radius: 8px; color: white; margin-bottom: 15px; }
-        label { color: #888; font-size: 10px; text-transform: uppercase; margin-bottom: 5px; display: block; }
-
-        /* Painel Status e Velocidade */
         #status-bar { position: fixed; bottom: 0; left: 0; width: 100%; background: var(--cor-ui); padding: 15px; z-index: 150; display: none; justify-content: space-around; border-top: 1px solid #333; }
         .stat-val { display: block; font-size: 20px; font-weight: 800; color: var(--cor-sucesso); }
-        #current-speed { font-size: 40px; font-weight: 900; color: white; background: var(--cor-ui); padding: 10px; border-radius: 12px; border: 2px solid #444; position: fixed; bottom: 100px; left: 15px; display: none; z-index: 200; }
-
-        #btn-start { background: var(--cor-principal); color: white; border: none; padding: 18px 40px; border-radius: 35px; font-weight: bold; position: fixed; bottom: 100px; right: 15px; z-index: 150; display: none; cursor: pointer; }
-        
-        #login-screen { position: fixed; width: 100%; height: 100%; background: var(--cor-fundo); display: flex; align-items: center; justify-content: center; z-index: 500; flex-direction: column; }
         .seta-veiculo { width: 0; height: 0; border-left: 10px solid transparent; border-right: 10px solid transparent; border-bottom: 30px solid #3498db; filter: drop-shadow(0 0 5px #3498db); }
+        #btn-start { background: var(--cor-principal); color: white; border: none; padding: 18px 40px; border-radius: 35px; font-weight: bold; position: fixed; bottom: 110px; right: 15px; z-index: 150; display: none; cursor: pointer; }
+        #login-screen { position: fixed; width: 100%; height: 100%; background: var(--cor-fundo); display: flex; align-items: center; justify-content: center; z-index: 500; flex-direction: column; }
     </style>
 </head>
 <body>
@@ -57,70 +45,47 @@
 <div id="login-screen">
     <div style="text-align: center; width: 85%;">
         <h1>Minha Rota v22</h1>
-        <input type="password" id="group-key" placeholder="Senha do Grupo" style="width: 100%; text-align: center; padding: 18px; border-radius: 12px; background: #1e1e1e; border: 1px solid #333; color: white; margin-bottom: 15px;">
+        <input type="password" id="group-key" placeholder="Senha FZ25" style="width: 100%; text-align: center; padding: 18px; border-radius: 12px; background: #1e1e1e; border: 1px solid #333; color: white; margin-bottom: 15px;">
         <button onclick="App.autenticar()" style="width: 100%; padding: 18px; border-radius: 12px; background: var(--cor-principal); color: white; border: none; font-weight: bold;">ENTRAR</button>
         <button id="btnInstall" style="width: 100%; padding: 15px; border-radius: 12px; background: #34495e; color: white; border: none; margin-top: 15px; display: none;">📲 INSTALAR APP</button>
     </div>
 </div>
 
 <header id="app-header">
-    <button class="btn-header" onclick="App.toggleMenu()">☰</button>
+    <button onclick="App.toggleMenu()" style="background:none; border:none; color:white; font-size:24px;">☰</button>
     <h1>MINHA ROTA</h1>
-    <button class="btn-header" onclick="App.sos()" style="font-size: 20px;">🆘</button>
+    <button onclick="App.sos()" style="background:none; border:none; font-size:20px;">🆘</button>
 </header>
 
 <div id="sidebar">
-    <h3 style="color: var(--cor-principal);">Veículo</h3>
-    <label>Montadora</label>
-    <select id="sel-montadora" onchange="App.atualizarModelos()">
-        <option value="">Selecione...</option>
-        <option value="yamaha">Yamaha</option>
-        <option value="honda">Honda</option>
-    </select>
-    <label>Modelo</label>
-    <select id="sel-modelo" onchange="App.aplicarConsumo()"><option value="">--</option></select>
+    <h3 style="color: var(--cor-principal);">Configuração</h3>
     <label>Consumo (km/L)</label>
     <input type="number" id="v-consumo" value="29">
     <button onclick="App.salvarConfig()" style="width: 100%; padding: 15px; background: var(--cor-sucesso); border: none; color: white; border-radius: 12px; font-weight: bold;">SALVAR</button>
 </div>
 
 <div id="nav-header">
-    <div class="search-box" id="box-origem"></div>
-    <div class="search-box" id="box-destino"></div>
+    <div class="search-container">
+        <input type="text" id="input-destino" class="search-input" placeholder="Para onde vamos em Fortaleza?" oninput="App.buscarEndereco(this.value)">
+        <div id="suggestions" class="suggestions"></div>
+    </div>
 </div>
-
-<div id="current-speed">0</div>
 
 <button id="btn-start" onclick="App.iniciarNavegacao()">IR AGORA</button>
 
 <div id="status-bar">
     <div class="stat-item"><span id="val-tempo" class="stat-val">--</span><span class="stat-lab">Min</span></div>
     <div class="stat-item"><span id="val-custo" class="stat-val">--</span><span class="stat-lab">Custo</span></div>
-    <div class="stat-item"><span id="val-dist" class="stat-val">--</span><span class="stat-lab">Distância</span></div>
+    <div class="stat-item"><span id="val-dist" class="stat-val">--</span><span class="stat-lab">KM</span></div>
 </div>
 
 <div id="map"></div>
 
 <script>
-    // Lógica do Instalador PWA
-    let deferredPrompt;
-    window.addEventListener('beforeinstallprompt', (e) => {
-        e.preventDefault(); deferredPrompt = e;
-        document.getElementById('btnInstall').style.display = 'block';
-    });
-    document.getElementById('btnInstall').addEventListener('click', async () => {
-        if (deferredPrompt) { deferredPrompt.prompt(); deferredPrompt = null; }
-    });
     if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js');
 
-    const VEICULOS = {
-        yamaha: { 'Fazer 250 (FZ25)': 29, 'MT-03': 22, 'Lander 250': 30 },
-        honda: { 'CB 300F Twister': 32, 'XRE 300': 27, 'Bros 160': 40 }
-    };
-
     const App = {
-        map: null, marker: null, userLoc: [-38.5267, -3.7319], modoGPS: false,
-        origem: null, destino: null,
+        map: null, marker: null, userLoc: [-38.5267, -3.7319], modoGPS: false, destino: null,
 
         autenticar() {
             if (document.getElementById('group-key').value === 'FZ25-FOR') {
@@ -132,53 +97,47 @@
             }
         },
 
-        atualizarModelos() {
-            const m = document.getElementById('sel-montadora').value;
-            const s = document.getElementById('sel-modelo');
-            s.innerHTML = '<option value="">Modelo...</option>';
-            if(m) Object.keys(VEICULOS[m]).forEach(mod => s.innerHTML += `<option value="${VEICULOS[m][mod]}">${mod}</option>`);
-        },
-
-        aplicarConsumo() { document.getElementById('v-consumo').value = document.getElementById('sel-modelo').value; },
-
         initMapa() {
             mapboxgl.accessToken = 'pk.eyJ1Ijoid2V2ZXJzb25mIiwiYSI6ImNtbHF5bmh1YTA0djgzZHB4dTJpaG9rbHgifQ.jo3DG631F030AxG_nFKVEQ';
             this.map = new mapboxgl.Map({ container: 'map', style: 'mapbox://styles/mapbox/dark-v11', center: this.userLoc, zoom: 12 });
-            
             const el = document.createElement('div'); el.className = 'seta-veiculo';
             this.marker = new mapboxgl.Marker(el).setLngLat(this.userLoc).addTo(this.map);
-
-            const opt = { 
-                accessToken: mapboxgl.accessToken, 
-                mapboxgl: mapboxgl, 
-                countries: 'br', 
-                proximity: { longitude: -38.52, latitude: -3.73 },
-                bbox: [-38.75, -3.95, -38.25, -3.65] // REFORÇO: Filtra somente para Grande Fortaleza
-            };
-
-            const geoO = new MapboxGeocoder({ ...opt, placeholder: 'Origem: Minha Localização' });
-            const geoD = new MapboxGeocoder({ ...opt, placeholder: 'Destino: Para onde?' });
-
-            document.getElementById('box-origem').appendChild(geoO.onAdd(this.map));
-            document.getElementById('box-destino').appendChild(geoD.onAdd(this.map));
-
-            geoO.on('result', (e) => { this.origem = e.result.center; this.tracar(); });
-            geoD.on('result', (e) => { this.destino = e.result.center; this.tracar(); });
 
             navigator.geolocation.watchPosition(p => {
                 const pos = [p.coords.longitude, p.coords.latitude];
                 this.userLoc = pos;
                 this.marker.setLngLat(pos);
-                document.getElementById('current-speed').innerText = Math.round((p.coords.speed || 0) * 3.6);
-                if(this.modoGPS) {
-                    this.map.easeTo({ center: pos, bearing: p.coords.heading || 0, duration: 1000 });
-                }
+                if(this.modoGPS) this.map.easeTo({ center: pos, bearing: p.coords.heading || 0, duration: 1000 });
             }, null, { enableHighAccuracy: true });
         },
 
+        // NOVO MOTOR DE BUSCA (NOMINATIM / OPENSTREETMAP)
+        async buscarEndereco(query) {
+            if (query.length < 3) return;
+            const url = `https://nominatim.openstreetmap.org/search?format=json&q=${query}, Fortaleza&limit=5`;
+            const res = await fetch(url);
+            const data = await res.json();
+            const container = document.getElementById('suggestions');
+            container.innerHTML = '';
+            container.style.display = 'block';
+            
+            data.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'suggestion-item';
+                div.innerText = item.display_name;
+                div.onclick = () => {
+                    this.destino = [parseFloat(item.lon), parseFloat(item.lat)];
+                    document.getElementById('input-destino').value = item.display_name;
+                    container.style.display = 'none';
+                    this.tracar();
+                };
+                container.appendChild(div);
+            });
+        },
+
         async tracar() {
-            if (!this.origem || !this.destino) return;
-            const res = await fetch(`https://api.mapbox.com/directions/v5/mapbox/driving/${this.origem[0]},${this.origem[1]};${this.destino[0]},${this.destino[1]}?geometries=geojson&access_token=${mapboxgl.accessToken}`);
+            if (!this.destino) return;
+            const res = await fetch(`https://api.mapbox.com/directions/v5/mapbox/driving/${this.userLoc[0]},${this.userLoc[1]};${this.destino[0]},${this.destino[1]}?geometries=geojson&access_token=${mapboxgl.accessToken}`);
             const data = await res.json();
             if(data.routes && data.routes[0]) {
                 const r = data.routes[0];
@@ -198,7 +157,6 @@
             this.modoGPS = true;
             document.getElementById('nav-header').style.display = 'none';
             document.getElementById('btn-start').style.display = 'none';
-            document.getElementById('current-speed').style.display = 'block';
             this.map.flyTo({ center: this.userLoc, zoom: 18, pitch: 60 });
         },
 
