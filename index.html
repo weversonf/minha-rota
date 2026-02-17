@@ -9,7 +9,7 @@
     <link href="https://api.mapbox.com/mapbox-gl-js/v3.0.1/mapbox-gl.css" rel="stylesheet" />
     <style>
         :root { --cor-principal: #e74c3c; --cor-fundo: #121212; }
-        body { margin: 0; padding: 0; background: var(--cor-fundo); font-family: 'Segoe UI', Roboto, sans-serif; overflow: hidden; }
+        body { margin: 0; padding: 0; background: var(--cor-fundo); font-family: 'Segoe UI', sans-serif; overflow: hidden; }
         #map { position: absolute; top: 0; bottom: 0; width: 100%; display: none; }
         
         /* Tela de Login */
@@ -27,7 +27,7 @@
             border-radius: 12px; font-weight: bold; width: 100%; font-size: 16px; cursor: pointer;
         }
 
-        /* Card de Informações Inferior */
+        /* Card de Informações */
         #info-card {
             position: fixed; bottom: 25px; left: 5%; width: 90%; background: rgba(255,255,255,0.98); 
             padding: 20px; border-radius: 20px; display: none; z-index: 50; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
@@ -35,33 +35,32 @@
         }
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
         
-        .valor-gasto { color: #27ae60; font-size: 22px; font-weight: bold; margin-top: 5px; }
-        .detalhe-rota { color: #555; font-size: 14px; margin-bottom: 10px; }
+        .valor-gasto { color: #27ae60; font-size: 24px; font-weight: bold; margin-top: 5px; }
+        .detalhe-rota { color: #555; font-size: 14px; }
     </style>
 </head>
 <body>
 
 <div id="login-screen">
     <div class="login-card">
-        <h1 style="margin-bottom: 5px;">Minha Rota</h1>
-        <p style="color: #888; margin-bottom: 30px;">Segurança e Economia</p>
+        <h1>Minha Rota</h1>
+        <p style="color: #888; margin-bottom: 30px;">Segurança e Economia para sua FZ25</p>
         <input type="password" id="group-key" placeholder="Chave do Grupo" autocomplete="off">
-        <button onclick="checkKey()">ACESSAR MAPA</button>
+        <button onclick="checkKey()">ENTRAR</button>
     </div>
 </div>
 
 <div id="map"></div>
 
 <div id="info-card">
-    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+    <div style="display: flex; justify-content: space-between;">
         <div>
-            <div id="rota-distancia" style="font-weight: bold; color: #333;">Calculando trajeto...</div>
-            <div id="info-veiculo" class="detalhe-rota">FZ25 2023 (29km/L)</div>
+            <div id="rota-distancia" style="font-weight: bold; color: #333; font-size: 16px;">Selecione um destino</div>
+            <div class="detalhe-rota">FZ25 2023 | 29km/L</div>
         </div>
-        <button onclick="this.parentElement.parentElement.style.display='none'" style="width: auto; padding: 5px 10px; background: #ddd; color: #333; font-size: 12px; border-radius: 5px; border: none;">X</button>
+        <button onclick="document.getElementById('info-card').style.display='none'" style="background: none; border: none; color: #999; font-size: 20px;">×</button>
     </div>
     <div class="valor-gasto" id="gasto-estimado">R$ 0,00</div>
-    <div style="font-size: 11px; color: #999; margin-top: 8px;">*Estimativa baseada no consumo médio</div>
 </div>
 
 <script>
@@ -70,87 +69,97 @@
         chaveAcesso: 'FZ25-FOR',
         veiculo: { consumo: 29 }, 
         precoCombustivel: 6.15, 
-        centroInicial: [-38.5267, -3.7319] 
+        centroInicial: [-38.5267, -3.7319] // Fortaleza
     };
 
-    // Estrutura para você popular com pontos de Fortaleza
     const bancoDados = {
         areasRisco: [
             {
-                nome: "Área Exemplo",
-                coords: [
-                    [-38.540, -3.720], [-38.525, -3.720],
-                    [-38.525, -3.730], [-38.540, -3.730]
-                ]
+                nome: "Centro - Área Crítica",
+                coords: [[-38.540, -3.720], [-38.525, -3.720], [-38.525, -3.730], [-38.540, -3.730]]
             }
-        ],
-        pontosApoio: [
-            { nome: "Posto Shell 24h", coords: [-38.4891, -3.7327], desc: "Conveniência e Seguro" }
         ]
     };
 
+    let userLocation = CONFIG.centroInicial;
+    let map;
+
     function checkKey() {
-        const inputKey = document.getElementById('group-key').value;
-        if(inputKey === CONFIG.chaveAcesso) {
+        if(document.getElementById('group-key').value === CONFIG.chaveAcesso) {
             document.getElementById('login-screen').style.display = 'none';
             document.getElementById('map').style.display = 'block';
             initMap();
-        } else {
-            alert('Chave incorreta.');
-        }
+        } else { alert('Chave incorreta!'); }
     }
 
     function initMap() {
         mapboxgl.accessToken = CONFIG.token;
-        
-        const map = new mapboxgl.Map({
+        map = new mapboxgl.Map({
             container: 'map',
             style: 'mapbox://styles/mapbox/dark-v11',
             center: CONFIG.centroInicial,
             zoom: 13
         });
 
-        map.addControl(new mapboxgl.GeolocateControl({
+        const geolocate = new mapboxgl.GeolocateControl({
             positionOptions: { enableHighAccuracy: true },
             trackUserLocation: true,
             showUserHeading: true
-        }));
+        });
+        map.addControl(geolocate);
+
+        geolocate.on('geolocate', (e) => {
+            userLocation = [e.coords.longitude, e.coords.latitude];
+        });
 
         map.on('load', () => {
-            // Renderiza Áreas de Risco
+            // Desenhar Áreas de Risco
             bancoDados.areasRisco.forEach((area, i) => {
                 map.addSource(`risco-${i}`, {
                     'type': 'geojson',
-                    'data': {
-                        'type': 'Feature',
-                        'geometry': { 'type': 'Polygon', 'coordinates': [area.coords] }
-                    }
+                    'data': { 'type': 'Feature', 'geometry': { 'type': 'Polygon', 'coordinates': [area.coords] } }
                 });
                 map.addLayer({
-                    'id': `layer-${i}`,
-                    'type': 'fill',
-                    'source': `risco-${i}`,
+                    'id': `layer-${i}`, 'type': 'fill', 'source': `risco-${i}`,
                     'paint': { 'fill-color': '#ff0000', 'fill-opacity': 0.35 }
                 });
             });
 
-            // Renderiza Pontos de Apoio
-            bancoDados.pontosApoio.forEach(ponto => {
-                new mapboxgl.Marker({ color: '#3498db' })
-                    .setLngLat(ponto.coords)
-                    .setPopup(new mapboxgl.Popup().setHTML(`<b>${ponto.nome}</b><br>${ponto.desc}`))
-                    .addTo(map);
+            // Preparar a camada da linha azul
+            map.addSource('route', { 'type': 'geojson', 'data': { 'type': 'Feature', 'geometry': { 'type': 'LineString', 'coordinates': [] } } });
+            map.addLayer({
+                'id': 'route-line', 'type': 'line', 'source': 'route',
+                'layout': { 'line-join': 'round', 'line-cap': 'round' },
+                'paint': { 'line-color': '#3498db', 'line-width': 6, 'line-opacity': 0.8 }
             });
         });
 
-        // Clique para simular cálculo de gasto
-        map.on('click', (e) => {
-            document.getElementById('info-card').style.display = 'block';
-            const distKm = (Math.random() * 10 + 1).toFixed(1);
-            const custo = (distKm / CONFIG.veiculo.consumo) * CONFIG.precoCombustivel;
+        map.on('click', async (e) => {
+            const coords = e.lngLat;
+            const start = `${userLocation[0]},${userLocation[1]}`;
+            const end = `${coords.lng},${coords.lat}`;
 
-            document.getElementById('rota-distancia').innerText = `Distância aprox: ${distKm} km`;
-            document.getElementById('gasto-estimado').innerText = `R$ ${custo.toFixed(2)}`;
+            try {
+                const query = await fetch(`https://api.mapbox.com/directions/v5/mapbox/driving/${start};${end}?geometries=geojson&access_token=${mapboxgl.accessToken}`);
+                const json = await query.json();
+                
+                if (json.routes && json.routes[0]) {
+                    const data = json.routes[0];
+                    map.getSource('route').setData({
+                        'type': 'Feature',
+                        'geometry': data.geometry
+                    });
+
+                    const distKm = (data.distance / 1000).toFixed(1);
+                    const custo = (distKm / CONFIG.veiculo.consumo) * CONFIG.precoCombustivel;
+
+                    document.getElementById('info-card').style.display = 'block';
+                    document.getElementById('rota-distancia').innerText = `${distKm} km percorridos`;
+                    document.getElementById('gasto-estimado').innerText = `R$ ${custo.toFixed(2)}`;
+                }
+            } catch (err) {
+                console.error("Erro ao traçar rota:", err);
+            }
         });
     }
 </script>
