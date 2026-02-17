@@ -4,11 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#121212">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Minha Rota v15 - GPS Inteligente</title>
+    <title>Minha Rota v16 - Navegador FZ25</title>
     
-    <link rel="manifest" href="data:application/manifest+json,{"name":"Minha Rota GPS","short_name":"MinhaRota","start_url":".","display":"standalone","background_color":"#121212","theme_color":"#e74c3c","icons":[{"src":"https://cdn-icons-png.flaticon.com/512/1673/1673273.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}]}">
+    <link rel="manifest" href="data:application/manifest+json,{"name":"Minha Rota GPS","short_name":"MinhaRota","start_url":".","display":"standalone","background_color":"#121212","theme_color":"#e74c3c","icons":[{"src":"https://cdn-icons-png.flaticon.com/512/1673/1673273.png","sizes":"512x512","type":"image/png"}]}">
 
     <script src="https://api.mapbox.com/mapbox-gl-js/v3.0.1/mapbox-gl.js"></script>
     <link href="https://api.mapbox.com/mapbox-gl-js/v3.0.1/mapbox-gl.css" rel="stylesheet" />
@@ -16,204 +14,149 @@
     <link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.0.0/mapbox-gl-geocoder.css" type="text/css">
 
     <style>
-        :root { --cor-principal: #e74c3c; --cor-fundo: #121212; --cor-menu: #1e1e1e; --cor-sucesso: #27ae60; }
+        :root { --cor-principal: #e74c3c; --cor-fundo: #121212; --cor-ui: rgba(30, 30, 30, 0.95); }
         body { margin: 0; padding: 0; background: var(--cor-fundo); font-family: 'Segoe UI', sans-serif; overflow: hidden; color: white; }
-        #map { position: absolute; top: 0; bottom: 0; width: 100%; display: none; }
+        #map { position: absolute; top: 0; bottom: 0; width: 100%; }
         
-        /* UI */
-        .float-btn { position: fixed; z-index: 150; background: var(--cor-menu); color: white; border: none; border-radius: 12px; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.4); display: none; }
-        #menu-btn { top: 15px; left: 15px; padding: 12px 15px; }
-        #panic-btn { bottom: 130px; right: 20px; width: 65px; height: 65px; border-radius: 50%; background: #ff0000; font-size: 28px; animation: pulse 2s infinite; border: 3px solid rgba(255,255,255,0.2); }
-        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+        /* Cabeçalho de Busca (Origem/Destino) */
+        #nav-header { position: fixed; top: 10px; left: 10px; right: 10px; z-index: 100; display: flex; flex-direction: column; gap: 8px; }
+        .search-box { background: var(--cor-ui); border-radius: 12px; border: 1px solid #333; overflow: hidden; }
+        
+        /* Instrução de Navegação (Topo) */
+        #manobra-card { position: fixed; top: 0; left: 0; width: 100%; background: #2ecc71; color: white; padding: 20px; z-index: 200; display: none; text-align: center; font-weight: bold; font-size: 18px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
 
-        #sidebar { position: fixed; top: 0; left: -320px; width: 300px; height: 100%; background: var(--cor-menu); z-index: 200; transition: 0.4s; padding: 25px; box-sizing: border-box; padding-top: 80px; border-right: 1px solid #333; overflow-y: auto; }
-        #sidebar.active { left: 0; }
+        /* Painel Inferior (Status) */
+        #status-bar { position: fixed; bottom: 0; left: 0; width: 100%; background: var(--cor-ui); padding: 15px; z-index: 150; display: none; border-top: 1px solid #333; display: flex; justify-content: space-around; align-items: center; }
+        .stat-item { text-align: center; }
+        .stat-val { display: block; font-size: 20px; font-weight: 800; color: #2ecc71; }
+        .stat-lab { font-size: 10px; color: #888; text-transform: uppercase; }
 
-        #info-card { position: fixed; bottom: 25px; left: 5%; width: 90%; max-width: 400px; background: white; padding: 20px; border-radius: 24px; display: none; z-index: 100; box-shadow: 0 15px 35px rgba(0,0,0,0.4); color: #333; }
-        .valor-gasto { color: var(--cor-sucesso); font-size: 28px; font-weight: 800; }
-        .btn-acao { width: 100%; padding: 16px; border-radius: 14px; border: none; font-weight: bold; font-size: 16px; cursor: pointer; }
+        /* Seta do Veículo */
+        .seta-veiculo { width: 0; height: 0; border-left: 15px solid transparent; border-right: 15px solid transparent; border-bottom: 40px solid #3498db; filter: drop-shadow(0 0 5px #3498db); }
 
-        /* Form Estilizado */
-        select, input { width: 100%; padding: 12px; background: #2c2c2c; border: 1px solid #444; border-radius: 8px; color: white; margin-bottom: 15px; font-size: 14px; }
-        label { color: #888; font-size: 11px; text-transform: uppercase; display: block; margin-bottom: 5px; }
-
-        #login-screen { position: fixed; width: 100%; height: 100%; background: var(--cor-fundo); display: flex; align-items: center; justify-content: center; z-index: 300; flex-direction: column; }
+        #btn-start { background: var(--cor-principal); color: white; border: none; padding: 15px 30px; border-radius: 30px; font-weight: bold; font-size: 16px; position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); z-index: 150; display: none; cursor: pointer; }
+        
+        #login-screen { position: fixed; width: 100%; height: 100%; background: var(--cor-fundo); display: flex; align-items: center; justify-content: center; z-index: 500; }
+        .mapboxgl-ctrl-geocoder { width: 100% !important; max-width: none !important; box-shadow: none; background: transparent; }
+        .mapboxgl-ctrl-geocoder--input { color: white !important; }
     </style>
 </head>
 <body>
 
 <div id="login-screen">
     <div style="text-align: center; width: 85%;">
-        <h1>Minha Rota v15</h1>
-        <p style="color: #666; margin-bottom: 30px;">FZ25 - Fortaleza Security</p>
-        <input type="password" id="group-key" placeholder="Senha do Grupo" style="text-align: center;">
-        <button onclick="App.autenticar()" class="btn-acao" style="background: var(--cor-principal); color: white;">ENTRAR</button>
-        <button id="btnInstall" class="btn-acao" style="background: #34495e; color: white; margin-top: 15px; display: none;">📲 INSTALAR APP</button>
+        <h1>Minha Rota v16</h1>
+        <input type="password" id="group-key" placeholder="Senha FZ25" style="width: 100%; padding: 18px; border-radius: 12px; background: #1e1e1e; color: white; border: 1px solid #333; text-align: center; margin-bottom: 20px;">
+        <button onclick="App.autenticar()" style="width: 100%; padding: 18px; border-radius: 12px; background: var(--cor-principal); color: white; border: none; font-weight: bold;">ACESSAR GPS</button>
     </div>
 </div>
 
-<button id="menu-btn" class="float-btn" onclick="App.toggleMenu()">☰</button>
-<button id="panic-btn" class="float-btn" onclick="App.sos()">🆘</button>
+<div id="manobra-card">Vire à direita em 200m</div>
 
-<div id="sidebar">
-    <h3 style="color: var(--cor-principal); margin-bottom: 25px;">Configurações de Veículo</h3>
-    
-    <label>Montadora</label>
-    <select id="sel-montadora" onchange="App.atualizarModelos()">
-        <option value="">Selecione...</option>
-        <option value="yamaha">Yamaha</option>
-        <option value="honda">Honda</option>
-    </select>
+<div id="nav-header">
+    <div class="search-box" id="box-origem"></div>
+    <div class="search-box" id="box-destino"></div>
+</div>
 
-    <label>Modelo</label>
-    <select id="sel-modelo" onchange="App.aplicarConsumo()">
-        <option value="">Selecione a montadora primeiro</option>
-    </select>
+<button id="btn-start" onclick="App.iniciarNavegacao()">INICIAR ROTA</button>
 
-    <label>Consumo Médio (km/L)</label>
-    <input type="number" id="v-consumo" value="29">
-
-    <label>Preço Gasolina (R$)</label>
-    <input type="number" step="0.01" id="v-preco" value="6.15">
-
-    <button onclick="App.salvarConfig()" class="btn-acao" style="background: var(--cor-sucesso); color: white;">SALVAR CONFIGS</button>
-    <button onclick="App.logout()" style="color:#e74c3c; background:none; border:none; width:100%; margin-top:20px; cursor:pointer;">SAIR</button>
+<div id="status-bar">
+    <div class="stat-item"><span class="stat-val" id="val-tempo">--</span><span class="stat-lab">Minutos</span></div>
+    <div class="stat-item"><span class="stat-val" id="val-custo">--</span><span class="stat-lab">Gasolina</span></div>
+    <div class="stat-item"><span class="stat-val" id="val-dist">--</span><span class="stat-lab">Distância</span></div>
 </div>
 
 <div id="map"></div>
 
-<div id="info-card">
-    <div style="display: flex; justify-content: space-between; align-items: center;">
-        <span id="rota-distancia" style="font-weight: bold; color: #999;">---</span>
-        <button onclick="document.getElementById('info-card').style.display='none'" style="border:none; background:none; font-size:24px;">×</button>
-    </div>
-    <div id="gasto-estimado" class="valor-gasto">R$ 0,00</div>
-    <button id="btn-ir" class="btn-acao" style="background: var(--cor-sucesso); color: white;" onclick="App.iniciarGPS()">INICIAR GPS</button>
-</div>
-
 <script>
-    // Registro SW e Instalação PWA
-    let installPrompt;
-    window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); installPrompt = e; document.getElementById('btnInstall').style.display = 'block'; });
-    document.getElementById('btnInstall').addEventListener('click', async () => { if(installPrompt) { installPrompt.prompt(); installPrompt = null; } });
-    if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js');
-
-    const VEICULOS = {
-        yamaha: { 'Fazer 250 (FZ25)': 29, 'MT-03': 22, 'Lander 250': 30 },
-        honda: { 'CB 300F Twister': 32, 'XRE 300': 27, 'Bros 160': 40 }
-    };
-
     const CONFIG = {
         token: 'pk.eyJ1Ijoid2V2ZXJzb25mIiwiYSI6ImNtbHF5bmh1YTA0djgzZHB4dTJpaG9rbHgifQ.jo3DG631F030AxG_nFKVEQ',
         chave: 'FZ25-FOR',
-        urlBairros: 'https://raw.githubusercontent.com/fititnt/gis-dataset-brasil/master/municipio/ce/fortaleza/bairros.geojson',
-        risco: { 'CENTRO': '#ff0000', 'MESSEJANA': '#ff0000', 'JANGURUSSU': '#ff0000', 'BARRA DO CEARÁ': '#ff0000', 'BOM JARDIM': '#ff0000', 'PARANGABA': '#ffa500' }
+        risco: { 'CENTRO': '#ff0000', 'MESSEJANA': '#ff0000', 'JANGURUSSU': '#ff0000' }
     };
 
     const App = {
-        map: null, userLoc: [-38.52, -3.73], modoGPS: false, ultimoBairro: "",
-
-        init() {
-            if (localStorage.getItem('auth_v15') === CONFIG.chave) this.carregarApp();
-            this.carregarCache();
-        },
+        map: null,
+        markerVeiculo: null,
+        origem: null,
+        destino: null,
+        modoGPS: false,
 
         autenticar() {
             if (document.getElementById('group-key').value === CONFIG.chave) {
-                localStorage.setItem('auth_v15', CONFIG.chave);
-                this.carregarApp();
-            } else alert("Senha incorreta!");
-        },
-
-        carregarApp() {
-            document.getElementById('login-screen').style.display = 'none';
-            document.getElementById('map').style.display = 'block';
-            document.querySelectorAll('.float-btn').forEach(b => b.style.display = 'block');
-            this.carregarMapa();
-        },
-
-        atualizarModelos() {
-            const mont = document.getElementById('sel-montadora').value;
-            const selModel = document.getElementById('sel-modelo');
-            selModel.innerHTML = '<option value="">Escolha o modelo...</option>';
-            if(mont && VEICULOS[mont]) {
-                Object.keys(VEICULOS[mont]).forEach(m => { selModel.innerHTML += `<option value="${VEICULOS[mont][m]}">${m}</option>`; });
+                document.getElementById('login-screen').style.display = 'none';
+                this.initMapa();
             }
         },
 
-        aplicarConsumo() {
-            const cons = document.getElementById('sel-modelo').value;
-            if(cons) document.getElementById('v-consumo').value = cons;
-        },
-
-        carregarMapa() {
+        initMapa() {
             mapboxgl.accessToken = CONFIG.token;
-            this.map = new mapboxgl.Map({ container: 'map', style: 'mapbox://styles/mapbox/dark-v11', center: this.userLoc, zoom: 12 });
+            this.map = new mapboxgl.Map({ container: 'map', style: 'mapbox://styles/mapbox/dark-v11', center: [-38.52, -3.73], zoom: 12 });
+
+            // Seta do Veículo
+            const el = document.createElement('div'); el.className = 'seta-veiculo';
+            this.markerVeiculo = new mapboxgl.Marker(el).setLngLat([-38.52, -3.73]).addTo(this.map);
+
+            // Campos de Busca
+            const geocoderOrigem = new MapboxGeocoder({ accessToken: CONFIG.token, placeholder: 'Origem: Minha Localização', countries: 'br' });
+            const geocoderDestino = new MapboxGeocoder({ accessToken: CONFIG.token, placeholder: 'Destino: Para onde?', countries: 'br' });
             
-            const geolocate = new mapboxgl.GeolocateControl({ positionOptions: { enableHighAccuracy: true }, trackUserLocation: true, showUserHeading: true });
-            this.map.addControl(geolocate, 'bottom-right');
-            this.map.addControl(new MapboxGeocoder({ accessToken: CONFIG.token, mapboxgl: mapboxgl, placeholder: 'Destino...', countries: 'br' }));
+            document.getElementById('box-origem').appendChild(geocoderOrigem.onAdd(this.map));
+            document.getElementById('box-destino').appendChild(geocoderDestino.onAdd(this.map));
 
-            geolocate.on('geolocate', (e) => {
-                this.userLoc = [e.coords.longitude, e.coords.latitude];
-                if(this.modoGPS) this.map.easeTo({ center: this.userLoc, bearing: e.coords.heading || 0, duration: 1000 });
-                this.checkRisco();
-            });
+            geocoderOrigem.on('result', (e) => { this.origem = e.result.center; this.tentarTracar(); });
+            geocoderDestino.on('result', (e) => { this.destino = e.result.center; this.tentarTracar(); });
 
-            this.map.on('load', () => {
-                this.map.addSource('bairros', { type: 'geojson', data: CONFIG.urlBairros });
-                this.map.addLayer({
-                    'id': 'camada-bairros', 'type': 'fill', 'source': 'bairros',
-                    'paint': { 'fill-color': ['match', ['upcase', ['get', 'nome']], ...Object.entries(CONFIG.risco).flat(), 'transparent'], 'fill-opacity': 0.45 }
-                });
-                this.map.addSource('route', { 'type': 'geojson', 'data': { 'type': 'Feature', 'geometry': { 'type': 'LineString', 'coordinates': [] } } });
-                this.map.addLayer({ 'id': 'route-line', 'type': 'line', 'source': 'route', 'paint': { 'line-color': '#3498db', 'line-width': 8 } });
-            });
-
-            this.map.on('click', (e) => this.calcRota([e.lngLat.lng, e.lngLat.lat]));
+            navigator.geolocation.watchPosition(p => {
+                const pos = [p.coords.longitude, p.coords.latitude];
+                if (!this.origem) this.origem = pos;
+                this.markerVeiculo.setLngLat(pos);
+                if (this.modoGPS) {
+                    this.map.setCenter(pos);
+                    if (p.coords.heading) {
+                        this.map.setBearing(p.coords.heading);
+                        el.style.transform = `rotate(${p.coords.heading}deg)`;
+                    }
+                }
+            }, null, { enableHighAccuracy: true });
         },
 
-        async calcRota(dest) {
-            const res = await fetch(`https://api.mapbox.com/directions/v5/mapbox/driving/${this.userLoc[0]},${this.userLoc[1]};${dest[0]},${dest[1]}?geometries=geojson&access_token=${CONFIG.token}`);
-            const j = await res.json();
-            if(j.routes[0]) {
-                this.map.getSource('route').setData({ 'type': 'Feature', 'geometry': j.routes[0].geometry });
-                const d = (j.routes[0].distance/1000).toFixed(1);
-                const custo = (d / document.getElementById('v-consumo').value) * document.getElementById('v-preco').value;
-                document.getElementById('rota-distancia').innerText = d + " KM";
-                document.getElementById('gasto-estimado').innerText = "R$ " + custo.toFixed(2);
-                document.getElementById('info-card').style.display = 'block';
-            }
-        },
+        async tentarTracar() {
+            if (!this.origem || !this.destino) return;
+            const res = await fetch(`https://api.mapbox.com/directions/v5/mapbox/driving/${this.origem[0]},${this.origem[1]};${this.destino[0]},${this.destino[1]}?geometries=geojson&steps=true&access_token=${CONFIG.token}`);
+            const data = await res.json();
+            
+            if (data.routes[0]) {
+                const r = data.routes[0];
+                if (this.map.getSource('route')) this.map.removeSource('route');
+                if (this.map.getLayer('route-line')) this.map.removeLayer('route-line');
 
-        iniciarGPS() { this.modoGPS = true; document.getElementById('info-card').style.display = 'none'; this.map.flyTo({ center: this.userLoc, zoom: 17, pitch: 60 }); },
+                this.map.addSource('route', { type: 'geojson', data: { type: 'Feature', geometry: r.geometry } });
+                this.map.addLayer({ id: 'route-line', type: 'line', source: 'route', paint: { 'line-color': '#3498db', 'line-width': 8 } });
 
-        checkRisco() {
-            const f = this.map.queryRenderedFeatures(this.map.project(this.userLoc), { layers: ['camada-bairros'] });
-            if (f.length > 0) {
-                const b = f[0].properties.nome.toUpperCase();
-                if (CONFIG.risco[b] && b !== this.ultimoBairro) {
-                    window.speechSynthesis.speak(new SpeechSynthesisUtterance(`Alerta: ${b} é zona de risco.`));
-                    this.ultimoBairro = b;
+                document.getElementById('val-tempo').innerText = Math.round(r.duration / 60);
+                document.getElementById('val-dist').innerText = (r.distance / 1000).toFixed(1) + "km";
+                document.getElementById('val-custo').innerText = "R$ " + ((r.distance / 1000 / 29) * 6.15).toFixed(2);
+                
+                document.getElementById('btn-start').style.display = 'block';
+                document.getElementById('status-bar').style.display = 'flex';
+                
+                // Pega a primeira manobra
+                if (r.legs[0].steps[0]) {
+                    document.getElementById('manobra-card').innerText = r.legs[0].steps[0].instruction;
                 }
             }
         },
 
-        sos() { window.open(`https://wa.me/?text=SOS FZ25! Localização: http://google.com/maps?q=${this.userLoc[1]},${this.userLoc[0]}`); },
-        toggleMenu() { document.getElementById('sidebar').classList.toggle('active'); },
-        salvarConfig() { 
-            localStorage.setItem('cfg_c', document.getElementById('v-consumo').value); 
-            localStorage.setItem('cfg_p', document.getElementById('v-preco').value); 
-            localStorage.setItem('cfg_mont', document.getElementById('sel-montadora').value);
-            this.toggleMenu(); alert("Configurações Salvas!"); 
-        },
-        carregarCache() {
-            if(localStorage.getItem('cfg_c')) document.getElementById('v-consumo').value = localStorage.getItem('cfg_c');
-            if(localStorage.getItem('cfg_mont')) { document.getElementById('sel-montadora').value = localStorage.getItem('cfg_mont'); this.atualizarModelos(); }
-        },
-        logout() { localStorage.clear(); location.reload(); }
+        iniciarNavegacao() {
+            this.modoGPS = true;
+            document.getElementById('nav-header').style.display = 'none';
+            document.getElementById('btn-start').style.display = 'none';
+            document.getElementById('manobra-card').style.display = 'block';
+            this.map.flyTo({ center: this.origem, zoom: 18, pitch: 60 });
+            window.speechSynthesis.speak(new SpeechSynthesisUtterance("Iniciando navegação para o destino."));
+        }
     };
-    window.onload = () => App.init();
 </script>
 </body>
 </html>
