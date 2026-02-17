@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <link rel="manifest" href="manifest.json">
-    <title>Minha Rota v06</title>
+    <title>Minha Rota v07</title>
     
     <script src="https://api.mapbox.com/mapbox-gl-js/v3.0.1/mapbox-gl.js"></script>
     <link href="https://api.mapbox.com/mapbox-gl-js/v3.0.1/mapbox-gl.css" rel="stylesheet" />
@@ -16,44 +15,40 @@
         body { margin: 0; padding: 0; background: var(--cor-fundo); font-family: 'Segoe UI', sans-serif; overflow: hidden; }
         #map { position: absolute; top: 0; bottom: 0; width: 100%; display: none; }
         
+        /* Menu Lateral Corrigido */
         #menu-btn {
-            position: fixed; top: 15px; left: 15px; z-index: 130;
+            position: fixed; top: 15px; left: 15px; z-index: 150;
             background: var(--cor-menu); color: white; border: none;
             padding: 12px; border-radius: 8px; cursor: pointer; display: none;
             box-shadow: 0 2px 10px rgba(0,0,0,0.5);
         }
-        
         #sidebar {
             position: fixed; top: 0; left: -280px; width: 280px; height: 100%;
-            background: var(--cor-menu); color: white; z-index: 120;
-            transition: 0.3s; padding: 20px; box-sizing: border-box;
-            box-shadow: 5px 0 15px rgba(0,0,0,0.5); padding-top: 70px;
+            background: var(--cor-menu); color: white; z-index: 140;
+            transition: 0.3s; padding: 20px; box-sizing: border-box; padding-top: 75px;
         }
         #sidebar.active { left: 0; }
         
         .config-item { margin-bottom: 20px; }
         .config-item label { display: block; font-size: 14px; color: #888; margin-bottom: 5px; }
-        .config-item input { width: 100%; padding: 10px; background: #2c2c2c; border: 1px solid #444; color: white; border-radius: 5px; box-sizing: border-box; }
+        .config-item input { width: 100%; padding: 10px; background: #2c2c2c; border: 1px solid #444; color: white; border-radius: 5px; }
 
-        .mapboxgl-ctrl-geocoder { min-width: 200px; border-radius: 10px; margin-top: 15px !important; margin-left: 60px !important; }
+        .mapboxgl-ctrl-geocoder { min-width: 200px; border-radius: 10px; margin-top: 15px !important; margin-left: 65px !important; }
 
         #login-screen { position: fixed; width: 100%; height: 100%; background: var(--cor-fundo); display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; z-index: 200; }
-        .login-card { width: 85%; text-align: center; }
-        #login-screen input { padding: 18px; border-radius: 12px; border: 1px solid #333; margin-bottom: 15px; width: 100%; background: #1e1e1e; color: white; text-align: center; box-sizing: border-box; }
-        #login-screen button { padding: 18px; background: var(--cor-principal); color: white; border: none; border-radius: 12px; font-weight: bold; width: 100%; }
-
-        #info-card { position: fixed; bottom: 25px; left: 5%; width: 90%; background: white; padding: 20px; border-radius: 20px; display: none; z-index: 50; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        .valor-gasto { color: #27ae60; font-size: 24px; font-weight: bold; }
-        .marker-icon { font-size: 24px; cursor: pointer; text-shadow: 0 0 5px rgba(0,0,0,0.5); }
+        #info-card { position: fixed; bottom: 25px; left: 5%; width: 90%; background: white; padding: 20px; border-radius: 20px; display: none; z-index: 50; }
+        
+        /* Ícones que não somem com zoom */
+        .custom-marker { font-size: 28px; cursor: pointer; text-shadow: 0 2px 4px rgba(0,0,0,0.3); }
     </style>
 </head>
 <body>
 
 <div id="login-screen">
-    <div class="login-card">
-        <h1>Minha Rota v06</h1>
-        <input type="password" id="group-key" placeholder="Chave do Grupo">
-        <button onclick="checkKey()">ENTRAR</button>
+    <div style="text-align: center; width: 85%;">
+        <h1>Minha Rota v07</h1>
+        <input type="password" id="group-key" placeholder="Chave do Grupo" style="padding: 18px; border-radius: 12px; border: 1px solid #333; margin-bottom: 15px; width: 100%; background: #1e1e1e; color: white; text-align: center;">
+        <button onclick="checkKey()" style="padding: 18px; background: var(--cor-principal); color: white; border: none; border-radius: 12px; font-weight: bold; width: 100%;">ENTRAR</button>
     </div>
 </div>
 
@@ -61,72 +56,59 @@
 
 <div id="sidebar">
     <h3>Configurações</h3>
-    <hr style="border: 0.5px solid #333; margin-bottom: 20px;">
     <div class="config-item">
-        <label>Veículo</label>
-        <input type="text" id="veiculo-nome" value="Fazer 250">
+        <label>Consumo Médio (km/L)</label>
+        <input type="number" id="v-consumo" value="29">
     </div>
     <div class="config-item">
-        <label>Consumo (km/L)</label>
-        <input type="number" id="veiculo-consumo" value="29">
+        <label>Preço Combustível (R$)</label>
+        <input type="number" step="0.01" id="v-preco" value="6.15">
     </div>
-    <div class="config-item">
-        <label>Preço Gasolina (R$)</label>
-        <input type="number" step="0.01" id="combustivel-preco" value="6.15">
-    </div>
-    <button onclick="saveConfigs()" style="background: #27ae60; width: 100%; padding: 12px; border: none; color: white; border-radius: 8px; font-weight: bold;">Salvar Alterações</button>
-    <br><br>
-    <button onclick="logout()" style="background: transparent; border: 1px solid #e74c3c; color: #e74c3c; width: 100%; padding: 10px; border-radius: 8px;">Sair / Trocar Chave</button>
+    <button onclick="saveConfigs()" style="background: #27ae60; width: 100%; padding: 12px; border: none; color: white; border-radius: 8px; font-weight: bold;">SALVAR</button>
+    <hr style="border:0; border-top: 1px solid #333; margin: 20px 0;">
+    <button onclick="logout()" style="background: transparent; border: 1px solid #e74c3c; color: #e74c3c; width: 100%; padding: 10px; border-radius: 8px;">SAIR</button>
 </div>
 
 <div id="map"></div>
 
 <div id="info-card">
     <div style="display: flex; justify-content: space-between;">
-        <div>
-            <div id="rota-distancia" style="font-weight: bold; color: #333;">Traçando rota...</div>
-            <div id="label-veiculo" style="color: #666; font-size: 13px;">Fazer 250 | 29km/L</div>
-        </div>
-        <button onclick="document.getElementById('info-card').style.display='none'" style="border: none; background: none; font-size: 24px;">×</button>
+        <div id="rota-distancia" style="font-weight: bold; color: #333;">Traçando...</div>
+        <button onclick="document.getElementById('info-card').style.display='none'" style="border: none; background: none; font-size: 20px;">×</button>
     </div>
-    <div class="valor-gasto" id="gasto-estimado">R$ 0,00</div>
+    <div id="gasto-estimado" style="color: #27ae60; font-size: 24px; font-weight: bold;">R$ 0,00</div>
 </div>
 
 <script>
     const CONFIG = {
         token: 'pk.eyJ1Ijoid2V2ZXJzb25mIiwiYSI6ImNtbHF5bmh1YTA0djgzZHB4dTJpaG9rbHgifQ.jo3DG631F030AxG_nFKVEQ',
         chaveAcesso: 'FZ25-FOR',
-        centroInicial: [-38.5267, -3.7319]
+        centro: [-38.5267, -3.7319]
     };
 
     const DB_LOCAIS = {
-        areasRisco: [
-            { id: 'centro', nome: 'Centro', coords: [[[-38.540, -3.720], [-38.525, -3.720], [-38.525, -3.730], [-38.540, -3.730], [-38.540, -3.720]]] },
-            { id: 'area2', nome: 'Área Perigosa 2', coords: [[[-38.510, -3.710], [-38.500, -3.710], [-38.500, -3.720], [-38.510, -3.720], [-38.510, -3.710]]] }
+        manchas: [
+            { id: 'm1', cor: '#ff0000', coords: [[[-38.540, -3.720], [-38.525, -3.720], [-38.525, -3.730], [-38.540, -3.730], [-38.540, -3.720]]] }
         ],
-        pontosApoio: [
-            { nome: 'Posto Shell 24h', coords: [-38.4891, -3.7327], desc: '🛡️ Conveniência 24h' },
-            { nome: 'Base PM Aldeota', coords: [-38.5100, -3.7500], desc: '🛡️ Segurança' }
-        ],
-        pontosRisco: [
-            { nome: 'Ponto de Atenção', coords: [-38.5200, -3.7400], desc: '⚠️ Alto índice de assaltos' }
+        pontos: [
+            { tipo: '⚠️', nome: 'Alerta de CVP', coords: [-38.520, -3.740], desc: 'Área com alto índice de roubos.' },
+            { tipo: '🛡️', nome: 'Posto Seguro', coords: [-38.489, -3.732], desc: 'Ponto de apoio 24h.' }
         ]
     };
 
-    let userLocation = CONFIG.centroInicial;
+    let userLocation = CONFIG.centro;
     let map;
 
     window.onload = function() {
-        const chaveSalva = localStorage.getItem('minha_rota_key');
-        if (chaveSalva === CONFIG.chaveAcesso) { iniciarApp(); }
-        carregarPreferencias();
+        if (localStorage.getItem('minha_rota_key') === CONFIG.chaveAcesso) { iniciarApp(); }
+        if(localStorage.getItem('v_consumo')) document.getElementById('v-consumo').value = localStorage.getItem('v_consumo');
     };
 
     function checkKey() {
         if(document.getElementById('group-key').value === CONFIG.chaveAcesso) {
             localStorage.setItem('minha_rota_key', CONFIG.chaveAcesso);
             iniciarApp();
-        } else { alert('Chave incorreta!'); }
+        } else { alert('Acesso negado.'); }
     }
 
     function iniciarApp() {
@@ -139,94 +121,55 @@
     function toggleMenu() { document.getElementById('sidebar').classList.toggle('active'); }
 
     function saveConfigs() {
-        localStorage.setItem('v_nome', document.getElementById('veiculo-nome').value);
-        localStorage.setItem('v_consumo', document.getElementById('veiculo-consumo').value);
-        localStorage.setItem('v_preco', document.getElementById('combustivel-preco').value);
-        alert('Configurações salvas!');
+        localStorage.setItem('v_consumo', document.getElementById('v-consumo').value);
+        localStorage.setItem('v_preco', document.getElementById('v-preco').value);
         location.reload();
-    }
-
-    function carregarPreferencias() {
-        if(localStorage.getItem('v_nome')) document.getElementById('veiculo-nome').value = localStorage.getItem('v_nome');
-        if(localStorage.getItem('v_consumo')) document.getElementById('veiculo-consumo').value = localStorage.getItem('v_consumo');
-        if(localStorage.getItem('v_preco')) document.getElementById('combustivel-preco').value = localStorage.getItem('v_preco');
     }
 
     function logout() { localStorage.clear(); location.reload(); }
 
     function initMap() {
         mapboxgl.accessToken = CONFIG.token;
-        map = new mapboxgl.Map({
-            container: 'map',
-            style: 'mapbox://styles/mapbox/dark-v11',
-            center: CONFIG.centroInicial,
-            zoom: 13
-        });
+        map = new mapboxgl.Map({ container: 'map', style: 'mapbox://styles/mapbox/dark-v11', center: CONFIG.centro, zoom: 12 });
 
         const geocoder = new MapboxGeocoder({ accessToken: mapboxgl.accessToken, mapboxgl: mapboxgl, placeholder: 'Destino...', countries: 'br' });
         map.addControl(geocoder);
 
-        const geolocate = new mapboxgl.GeolocateControl({ positionOptions: { enableHighAccuracy: true }, trackUserLocation: true, showUserHeading: true });
-        map.addControl(geolocate, 'bottom-right');
-
-        geolocate.on('geolocate', (e) => { userLocation = [e.coords.longitude, e.coords.latitude]; });
+        const geolocate = new MapboxGeocoder({ accessToken: mapboxgl.accessToken, mapboxgl: mapboxgl }); // Placeholder simulado
+        map.addControl(new mapboxgl.GeolocateControl({ trackUserLocation: true }), 'bottom-right');
 
         map.on('load', () => {
-            // Renderiza Manchas Vermelhas (Polígonos)
-            DB_LOCAIS.areasRisco.forEach((area) => {
-                map.addSource(area.id, { 'type': 'geojson', 'data': { 'type': 'Feature', 'geometry': { 'type': 'Polygon', 'coordinates': area.coords } } });
-                map.addLayer({ 'id': area.id, 'type': 'fill', 'source': area.id, 'paint': { 'fill-color': '#ff0000', 'fill-opacity': 0.45 } });
+            DB_LOCAIS.manchas.forEach(m => {
+                map.addSource(m.id, { 'type': 'geojson', 'data': { 'type': 'Feature', 'geometry': { 'type': 'Polygon', 'coordinates': m.coords } } });
+                map.addLayer({ 'id': m.id, 'type': 'fill', 'source': m.id, 'paint': { 'fill-color': m.cor, 'fill-opacity': 0.4 } });
             });
 
-            // Marcadores de Apoio (🛡️)
-            DB_LOCAIS.pontosApoio.forEach(ponto => {
+            DB_LOCAIS.pontos.forEach(p => {
                 const el = document.createElement('div');
-                el.className = 'marker-icon';
-                el.innerHTML = '🛡️';
-                new mapboxgl.Marker(el)
-                    .setLngLat(ponto.coords)
-                    .setPopup(new mapboxgl.Popup({ offset: 25 }).setHTML(`<b>${ponto.nome}</b><br>${ponto.desc}`))
-                    .addTo(map);
-            });
-
-            // Marcadores de Risco Específicos (⚠️)
-            DB_LOCAIS.pontosRisco.forEach(ponto => {
-                const el = document.createElement('div');
-                el.className = 'marker-icon';
-                el.innerHTML = '⚠️';
-                new mapboxgl.Marker(el)
-                    .setLngLat(ponto.coords)
-                    .setPopup(new mapboxgl.Popup({ offset: 25 }).setHTML(`<b>${ponto.nome}</b><br>${ponto.desc}`))
-                    .addTo(map);
+                el.className = 'custom-marker';
+                el.innerHTML = p.tipo;
+                new mapboxgl.Marker(el).setLngLat(p.coords).setPopup(new mapboxgl.Popup().setHTML(`<b>${p.nome}</b><br>${p.desc}`)).addTo(map);
             });
 
             map.addSource('route', { 'type': 'geojson', 'data': { 'type': 'Feature', 'geometry': { 'type': 'LineString', 'coordinates': [] } } });
-            map.addLayer({ 'id': 'route-line', 'type': 'line', 'source': 'route', 'layout': { 'line-join': 'round', 'line-cap': 'round' }, 'paint': { 'line-color': '#3498db', 'line-width': 6 } });
+            map.addLayer({ 'id': 'route-line', 'type': 'line', 'source': 'route', 'paint': { 'line-color': '#3498db', 'line-width': 6 } });
         });
 
-        const calcularRota = async (coords) => {
-            const start = `${userLocation[0]},${userLocation[1]}`;
-            const end = `${coords.lng || coords[0]},${coords.lat || coords[1]}`;
-            const query = await fetch(`https://api.mapbox.com/directions/v5/mapbox/driving/${start};${end}?geometries=geojson&access_token=${mapboxgl.accessToken}`);
-            const json = await query.json();
-            
-            if (json.routes && json.routes[0]) {
-                const data = json.routes[0];
-                map.getSource('route').setData({ 'type': 'Feature', 'geometry': data.geometry });
-                const distKm = (data.distance / 1000).toFixed(1);
-                const consumo = parseFloat(document.getElementById('veiculo-consumo').value);
-                const preco = parseFloat(document.getElementById('combustivel-preco').value);
-                const custo = (distKm / consumo) * preco;
-
+        const calc = async (c) => {
+            const res = await fetch(`https://api.mapbox.com/directions/v5/mapbox/driving/${userLocation[0]},${userLocation[1]};${c.lng || c[0]},${c.lat || c[1]}?geometries=geojson&access_token=${CONFIG.token}`);
+            const j = await res.json();
+            if(j.routes[0]) {
+                map.getSource('route').setData({ 'type': 'Feature', 'geometry': j.routes[0].geometry });
+                const d = (j.routes[0].distance/1000).toFixed(1);
+                const custo = (d / document.getElementById('v-consumo').value) * document.getElementById('v-preco').value;
                 document.getElementById('info-card').style.display = 'block';
-                document.getElementById('rota-distancia').innerText = `${distKm} km percorridos`;
-                document.getElementById('gasto-estimado').innerText = `R$ ${custo.toFixed(2)}`;
-                document.getElementById('label-veiculo').innerText = `${document.getElementById('veiculo-nome').value} | ${consumo}km/L`;
+                document.getElementById('rota-distancia').innerText = d + ' km reais';
+                document.getElementById('gasto-estimado').innerText = 'R$ ' + custo.toFixed(2);
             }
         };
 
-        geocoder.on('result', (e) => { calcularRota(e.result.center); });
-        map.on('click', (e) => { calcularRota(e.lngLat); });
+        geocoder.on('result', (e) => calc(e.result.center));
+        map.on('click', (e) => calc(e.lngLat));
     }
 </script>
 </body>
