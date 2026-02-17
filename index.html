@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#121212">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Minha Rota v14</title>
+    <title>Minha Rota v15 - FZ25</title>
     
     <link rel="manifest" href="data:application/manifest+json,{"name":"Minha Rota GPS","short_name":"MinhaRota","start_url":"/index.html","display":"standalone","background_color":"#121212","theme_color":"#e74c3c","icons":[{"src":"https://cdn-icons-png.flaticon.com/512/1673/1673273.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}]}">
 
@@ -25,7 +25,7 @@
         #menu-btn { top: 15px; left: 15px; padding: 12px 15px; }
         #panic-btn { bottom: 130px; right: 20px; width: 65px; height: 65px; border-radius: 50%; background: #ff0000; font-size: 28px; animation: pulse 2s infinite; border: 3px solid rgba(255,255,255,0.2); }
         
-        @keyframes pulse { 0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255,0,0,0.7); } 70% { transform: scale(1.1); box-shadow: 0 0 0 15px rgba(255,0,0,0); } 100% { transform: scale(1); } }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
 
         #sidebar { position: fixed; top: 0; left: -300px; width: 280px; height: 100%; background: var(--cor-menu); z-index: 200; transition: 0.4s; padding: 25px; box-sizing: border-box; padding-top: 80px; border-right: 1px solid #333; }
         #sidebar.active { left: 0; }
@@ -34,17 +34,24 @@
         .valor-gasto { color: var(--cor-sucesso); font-size: 28px; font-weight: 800; }
         .btn-acao { width: 100%; padding: 16px; border-radius: 14px; border: none; font-weight: bold; font-size: 16px; cursor: pointer; }
 
-        #login-screen { position: fixed; width: 100%; height: 100%; background: var(--cor-fundo); display: flex; align-items: center; justify-content: center; z-index: 300; }
+        /* Login & Install */
+        #login-screen { position: fixed; width: 100%; height: 100%; background: var(--cor-fundo); display: flex; align-items: center; justify-content: center; z-index: 300; flex-direction: column; }
+        #install-row { display: none; margin-top: 20px; width: 100%; }
+        .btn-install { background: #34495e; color: white; border: 1px solid #5d6d7e; }
     </style>
 </head>
 <body>
 
 <div id="login-screen">
     <div style="text-align: center; width: 85%;">
-        <h1>Minha Rota v14</h1>
-        <p style="color: #666; margin-bottom: 30px;">FZ25 - Fortaleza Edition</p>
+        <h1>Minha Rota v15</h1>
+        <p style="color: #666; margin-bottom: 30px;">Fortaleza - Fazer 250</p>
         <input type="password" id="group-key" placeholder="Senha do Grupo" style="width: 100%; padding: 18px; border-radius: 12px; background: #1e1e1e; color: white; border: 1px solid #333; text-align: center; margin-bottom: 20px;">
         <button onclick="App.autenticar()" class="btn-acao" style="background: var(--cor-principal); color: white;">ENTRAR</button>
+        
+        <div id="install-row">
+            <button id="btnInstall" class="btn-acao btn-install">📲 INSTALAR APP NO CELULAR</button>
+        </div>
     </div>
 </div>
 
@@ -52,18 +59,14 @@
 <button id="panic-btn" class="float-btn" onclick="App.sos()">🆘</button>
 
 <div id="sidebar">
-    <h3 style="color: var(--cor-principal);">Configurações</h3>
-    <div style="margin-bottom:20px;">
-        <label style="color:#888; font-size:11px;">CONSUMO (km/L)</label>
-        <input type="number" id="v-consumo" value="29" style="width:100%; padding:10px; background:#2c2c2c; color:white; border:none; border-radius:5px;">
-    </div>
-    <div style="margin-bottom:20px;">
-        <label style="color:#888; font-size:11px;">GASOLINA (R$)</label>
-        <input type="number" step="0.01" id="v-preco" value="6.15" style="width:100%; padding:10px; background:#2c2c2c; color:white; border:none; border-radius:5px;">
-    </div>
+    <h3 style="color: var(--cor-principal);">Configs FZ25</h3>
+    <label style="color:#888; font-size:11px;">CONSUMO (km/L)</label>
+    <input type="number" id="v-consumo" value="29" style="width:100%; padding:10px; background:#2c2c2c; color:white; border:none; margin-bottom:15px;">
+    <label style="color:#888; font-size:11px;">GASOLINA (R$)</label>
+    <input type="number" step="0.01" id="v-preco" value="6.15" style="width:100%; padding:10px; background:#2c2c2c; color:white; border:none; margin-bottom:15px;">
     <button onclick="App.salvarConfig()" class="btn-acao" style="background: var(--cor-sucesso); color: white;">SALVAR</button>
     <br><br>
-    <button onclick="App.logout()" style="color:#e74c3c; background:none; border:1px solid #e74c3c; width:100%; padding:10px; border-radius:8px; cursor:pointer;">LOGOUT</button>
+    <button onclick="App.logout()" style="color:#e74c3c; background:none; border:1px solid #e74c3c; width:100%; padding:10px; border-radius:8px; cursor:pointer;">SAIR</button>
 </div>
 
 <div id="map"></div>
@@ -78,10 +81,26 @@
 </div>
 
 <script>
-    // Registro do Service Worker (Essencial para Instalação no Android)
+    // Lógica de Instalação (PWA)
+    let deferredPrompt;
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        document.getElementById('install-row').style.display = 'block';
+    });
+
+    document.getElementById('btnInstall').addEventListener('click', async () => {
+        if (deferredPrompt) {
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            if (outcome === 'accepted') document.getElementById('install-row').style.display = 'none';
+            deferredPrompt = null;
+        }
+    });
+
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-            navigator.serviceWorker.register('./sw.js').then(reg => console.log('SW pronto!'));
+            navigator.serviceWorker.register('./sw.js').then(reg => console.log('SW ativo!'));
         });
     }
 
@@ -89,20 +108,20 @@
         token: 'pk.eyJ1Ijoid2V2ZXJzb25mIiwiYSI6ImNtbHF5bmh1YTA0djgzZHB4dTJpaG9rbHgifQ.jo3DG631F030AxG_nFKVEQ',
         chave: 'FZ25-FOR',
         urlBairros: 'https://raw.githubusercontent.com/fititnt/gis-dataset-brasil/master/municipio/ce/fortaleza/bairros.geojson',
-        risco: { 'CENTRO': '#ff0000', 'MESSEJANA': '#ff0000', 'JANGURUSSU': '#ff0000', 'BARRA DO CEARÁ': '#ff0000', 'BOM JARDIM': '#ff0000', 'PARANGABA': '#ffa500' }
+        risco: { 'CENTRO': '#ff0000', 'MESSEJANA': '#ff0000', 'JANGURUSSU': '#ff0000', 'BARRA DO CEARÁ': '#ff0000', 'BOM JARDIM': '#ff0000', 'VILA VELHA': '#ff0000', 'PARANGABA': '#ffa500' }
     };
 
     const App = {
         map: null, userLoc: [-38.52, -3.73], modoGPS: false, ultimoBairro: "",
 
         init() {
-            if (localStorage.getItem('auth_v14') === CONFIG.chave) this.carregarApp();
+            if (localStorage.getItem('auth_v15') === CONFIG.chave) this.carregarApp();
             this.carregarCache();
         },
 
         autenticar() {
             if (document.getElementById('group-key').value === CONFIG.chave) {
-                localStorage.setItem('auth_v14', CONFIG.chave);
+                localStorage.setItem('auth_v15', CONFIG.chave);
                 this.carregarApp();
             } else alert("Senha incorreta!");
         },
@@ -116,19 +135,11 @@
 
         carregarMapa() {
             mapboxgl.accessToken = CONFIG.token;
-            this.map = new mapboxgl.Map({ 
-                container: 'map', 
-                style: 'mapbox://styles/mapbox/dark-v11', 
-                center: this.userLoc, 
-                zoom: 12,
-                antialias: true 
-            });
+            this.map = new mapboxgl.Map({ container: 'map', style: 'mapbox://styles/mapbox/dark-v11', center: this.userLoc, zoom: 12 });
             
             const geolocate = new mapboxgl.GeolocateControl({ positionOptions: { enableHighAccuracy: true }, trackUserLocation: true, showUserHeading: true });
             this.map.addControl(geolocate, 'bottom-right');
-
-            const geocoder = new MapboxGeocoder({ accessToken: CONFIG.token, mapboxgl: mapboxgl, placeholder: 'Destino...', countries: 'br' });
-            this.map.addControl(geocoder);
+            this.map.addControl(new MapboxGeocoder({ accessToken: CONFIG.token, mapboxgl: mapboxgl, placeholder: 'Destino...', countries: 'br' }));
 
             geolocate.on('geolocate', (e) => {
                 this.userLoc = [e.coords.longitude, e.coords.latitude];
@@ -151,7 +162,6 @@
                 this.map.addLayer({ 'id': 'route-line', 'type': 'line', 'source': 'route', 'paint': { 'line-color': '#3498db', 'line-width': 8 } });
             });
 
-            geocoder.on('result', (e) => this.calcRota(e.result.center));
             this.map.on('click', (e) => this.calcRota([e.lngLat.lng, e.lngLat.lat]));
         },
 
@@ -172,7 +182,6 @@
             this.modoGPS = true;
             document.getElementById('info-card').style.display = 'none';
             this.map.flyTo({ center: this.userLoc, zoom: 17, pitch: 60 });
-            window.speechSynthesis.speak(new SpeechSynthesisUtterance("Modo GPS ativo. Cuidado nas zonas de risco."));
         },
 
         checkRisco() {
@@ -180,23 +189,17 @@
             if (f.length > 0) {
                 const b = f[0].properties.nome.toUpperCase();
                 if (CONFIG.risco[b] && b !== this.ultimoBairro) {
-                    window.speechSynthesis.speak(new SpeechSynthesisUtterance(`Atenção, zona de risco: ${b}`));
+                    window.speechSynthesis.speak(new SpeechSynthesisUtterance(`Alerta: ${b} é área de risco.`));
                     this.ultimoBairro = b;
                 }
             }
         },
 
-        sos() { window.open(`https://wa.me/?text=🚨 SOS! Localização: http://maps.google.com/maps?q=${this.userLoc[1]},${this.userLoc[0]}`); },
+        sos() { window.open(`https://wa.me/?text=SOS! Localização: http://maps.google.com/maps?q=${this.userLoc[1]},${this.userLoc[0]}`); },
         toggleMenu() { document.getElementById('sidebar').classList.toggle('active'); },
-        salvarConfig() { 
-            localStorage.setItem('cfg_c', document.getElementById('v-consumo').value); 
-            localStorage.setItem('cfg_p', document.getElementById('v-preco').value); 
-            this.toggleMenu(); 
-            alert("Configurações Salvas!"); 
-        },
+        salvarConfig() { localStorage.setItem('cfg_c', document.getElementById('v-consumo').value); this.toggleMenu(); alert("Salvo!"); },
         carregarCache() {
             if(localStorage.getItem('cfg_c')) document.getElementById('v-consumo').value = localStorage.getItem('cfg_c');
-            if(localStorage.getItem('cfg_p')) document.getElementById('v-preco').value = localStorage.getItem('cfg_p');
         },
         logout() { localStorage.clear(); location.reload(); }
     };
