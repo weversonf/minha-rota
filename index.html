@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#121212">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Minha Rota v23 - Premium UI</title>
+    <title>Minha Rota v24 - Premium Navigation</title>
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -16,9 +16,9 @@
         :root { 
             --cor-principal: #FF4757; 
             --cor-fundo: #0F0F0F; 
-            --cor-card: rgba(30, 30, 30, 0.85);
-            --radius: 18px;
-            --shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            --cor-card: rgba(25, 25, 25, 0.9);
+            --radius: 20px;
+            --shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
         }
 
         body { 
@@ -29,76 +29,80 @@
             color: #FFFFFF;
         }
 
-        /* LOGIN MODERNO */
+        /* LOGIN */
         #login-screen { 
             position: fixed; width: 100%; height: 100%; 
             background: radial-gradient(circle at center, #1e1e1e 0%, #0f0f0f 100%);
             z-index: 5000; display: flex; align-items: center; justify-content: center; 
+            transition: 0.5s;
         }
         .login-card {
-            background: var(--cor-card);
-            backdrop-filter: blur(10px);
-            padding: 40px; border-radius: var(--radius);
-            box-shadow: var(--shadow);
-            text-align: center; width: 80%; max-width: 320px;
+            background: var(--cor-card); backdrop-filter: blur(15px);
+            padding: 40px; border-radius: var(--radius); text-align: center; width: 80%; max-width: 320px;
+            border: 1px solid rgba(255,255,255,0.1);
         }
 
-        /* HEADER PREMIUM */
+        /* HEADER */
         #header-app { 
             position: fixed; top: 0; left: 0; width: 100%; height: 70px; 
-            background: rgba(15, 15, 15, 0.8); backdrop-filter: blur(12px);
+            background: rgba(15, 15, 15, 0.85); backdrop-filter: blur(15px);
             z-index: 1000; display: none; align-items: center; justify-content: space-between; 
             padding: 0 20px; box-sizing: border-box; 
         }
         #header-app h1 { font-size: 14px; letter-spacing: 2px; text-transform: uppercase; font-weight: 700; color: #fff; }
 
-        /* INPUTS FLAT DESIGN */
-        input[type="password"], input[type="number"], input[type="text"], select {
-            width: 100%; padding: 16px; margin-bottom: 15px; 
-            background: rgba(255, 255, 255, 0.05); 
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 12px; color: white; box-sizing: border-box;
-            transition: 0.3s;
+        /* INPUTS MODERNOS */
+        input, select {
+            width: 100%; padding: 16px; margin-bottom: 12px; 
+            background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 14px; color: white; box-sizing: border-box; outline: none;
         }
-        input:focus { border-color: var(--cor-principal); outline: none; background: rgba(255, 255, 255, 0.1); }
+        input:focus { border-color: var(--cor-principal); }
 
-        /* BUSCA FLOATING CARD */
+        /* BUSCA DUPLA (ORIGEM/DESTINO) */
         #nav-header { 
-            position: fixed; top: 85px; left: 15px; right: 15px; 
+            position: fixed; top: 80px; left: 15px; right: 15px; 
             z-index: 500; display: none; 
         }
         .search-container { 
-            background: var(--cor-card); backdrop-filter: blur(10px);
-            border-radius: var(--radius); box-shadow: var(--shadow);
-            border: 1px solid rgba(255,255,255,0.1); overflow: hidden; 
+            background: var(--cor-card); backdrop-filter: blur(15px);
+            border-radius: var(--radius); padding: 15px; box-shadow: var(--shadow);
+            border: 1px solid rgba(255,255,255,0.1);
         }
-        .search-input { width: 100%; background: transparent; border: none; padding: 18px; color: white; font-size: 16px; outline: none; }
+        .search-input { margin-bottom: 8px; font-size: 14px; }
 
-        /* MAPA FULLSCREEN */
+        /* MAPA */
         #map { position: absolute; top: 0; bottom: 0; width: 100%; z-index: 1; display: none; }
 
-        /* SIDEBAR ESTILO DRAWER */
+        /* SIDEBAR DRAWER */
         #sidebar { 
             position: fixed; top: 0; left: -100%; width: 85%; max-width: 300px; 
             height: 100%; background: #121212; z-index: 2000; 
             transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1); 
             padding: 100px 25px 25px; box-sizing: border-box; 
-            box-shadow: 20px 0 50px rgba(0,0,0,0.5);
         }
         #sidebar.active { left: 0; }
 
-        /* BOTÕES FLAT */
-        .btn-acao { 
-            padding: 18px; border-radius: 14px; border: none; 
-            font-weight: 700; font-size: 14px; cursor: pointer; 
-            transition: 0.2s; text-transform: uppercase; letter-spacing: 1px;
+        /* PAINEL DE RESULTADOS (RODAPÉ) */
+        #route-info {
+            position: fixed; bottom: -100%; left: 15px; right: 15px;
+            background: var(--cor-card); backdrop-filter: blur(15px);
+            border-radius: var(--radius); padding: 20px; z-index: 500;
+            transition: 0.5s; border: 1px solid rgba(255,255,255,0.1);
+            display: flex; justify-content: space-around; text-align: center;
         }
-        .btn-acao:active { transform: scale(0.96); }
-        .btn-principal { background: var(--cor-principal); color: white; width: 100%; }
-        .btn-icon { background: rgba(255,255,255,0.1); border-radius: 50%; width: 45px; height: 45px; color: white; display: flex; align-items: center; justify-content: center; font-size: 20px; border: none; }
+        .route-stat { font-weight: 800; font-size: 18px; color: #2ed573; }
+        .route-label { font-size: 10px; color: #888; text-transform: uppercase; }
 
-        .suggestions { background: var(--cor-card); border-top: 1px solid rgba(255,255,255,0.1); display: none; max-height: 200px; overflow-y: auto; }
-        .suggestion-item { padding: 16px; color: #ddd; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 14px; }
+        .btn-acao { 
+            padding: 18px; border-radius: 14px; border: none; font-weight: 700; 
+            cursor: pointer; transition: 0.2s; text-transform: uppercase;
+        }
+        .btn-principal { background: var(--cor-principal); color: white; width: 100%; }
+        .btn-icon { background: rgba(255,255,255,0.1); border-radius: 50%; width: 45px; height: 45px; color: white; border: none; font-size: 20px; cursor: pointer; }
+        
+        .suggestions { background: rgba(20, 20, 20, 0.95); border-radius: 12px; display: none; max-height: 150px; overflow-y: auto; margin-bottom: 10px; }
+        .suggestion-item { padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 13px; }
     </style>
 </head>
 <body>
@@ -106,44 +110,69 @@
 <div id="login-screen">
     <div class="login-card">
         <div style="font-size: 40px; margin-bottom: 10px;">🏍️</div>
-        <h2 style="margin: 0 0 20px 0; font-weight: 800; font-size: 22px;">MINHA ROTA</h2>
-        <input type="password" id="pass" placeholder="Senha FZ25">
-        <button onclick="App.entrar()" class="btn-acao btn-principal">ENTRAR</button>
-        <button id="btn-install" class="btn-acao" style="background: none; color: #888; margin-top: 10px; display: none;">Instalar App</button>
+        <h2 style="margin: 0 0 20px 0; font-weight: 800; letter-spacing: 2px;">v24 PREMIUM</h2>
+        <input type="password" id="pass" placeholder="Senha do Grupo">
+        <button onclick="App.entrar()" class="btn-acao btn-principal">ACESSAR</button>
     </div>
 </div>
 
 <header id="header-app">
-    <button class="btn-icon" onclick="App.toggleMenu()">☰</button>
-    <h1>Minha Rota v23</h1>
+    <button class="btn-icon" id="menu-btn" onclick="App.toggleMenu()">☰</button>
+    <h1>Minha Rota v24</h1>
     <button class="btn-icon" onclick="App.sos()" style="background: rgba(255, 71, 87, 0.2); color: var(--cor-principal);">🆘</button>
 </header>
 
 <div id="sidebar">
-    <h2 style="margin-top: 0; color: var(--cor-principal);">Ajustes</h2>
-    <div style="margin-bottom: 25px;">
-        <label style="color:#666; font-size:11px; font-weight: 700;">CONSUMO FZ25 (km/L)</label>
-        <input type="number" id="consumo" value="29">
-    </div>
-    <button class="btn-acao btn-principal" style="background: #2ed573;" onclick="App.toggleMenu()">CONCLUÍDO</button>
+    <h2 style="color: var(--cor-principal); margin-bottom: 30px;">Veículo</h2>
+    <label style="color:#666; font-size:10px; font-weight:700;">MONTADORA</label>
+    <select id="sel-montadora" onchange="App.atualizarModelos()">
+        <option value="">Selecione...</option>
+        <option value="yamaha">Yamaha</option>
+        <option value="honda">Honda</option>
+    </select>
+    
+    <label style="color:#666; font-size:10px; font-weight:700;">MODELO</label>
+    <select id="sel-modelo" onchange="App.aplicarConsumo()">
+        <option value="">--</option>
+    </select>
+
+    <label style="color:#666; font-size:10px; font-weight:700;">CONSUMO (km/L)</label>
+    <input type="number" id="consumo" value="29">
+    
+    <button class="btn-acao btn-principal" style="background: #2ed573; margin-top: 20px;" onclick="App.toggleMenu()">SALVAR</button>
 </div>
 
 <div id="nav-header">
     <div class="search-container">
-        <input type="text" class="search-input" placeholder="Para onde vamos hoje?" oninput="App.buscar(this.value)">
-        <div id="suggestions" class="suggestions"></div>
+        <input type="text" id="input-origem" class="search-input" placeholder="Origem: Minha Localização" oninput="App.buscar(this.value, 'origem')">
+        <div id="sug-origem" class="suggestions"></div>
+        
+        <input type="text" id="input-destino" class="search-input" placeholder="Destino: Para onde?" oninput="App.buscar(this.value, 'destino')">
+        <div id="sug-destino" class="suggestions"></div>
+        
+        <button class="btn-acao btn-principal" style="padding: 12px; font-size: 12px;" onclick="App.calcularRota()">TRAÇAR ROTA</button>
     </div>
+</div>
+
+<div id="route-info">
+    <div><span id="res-dist" class="route-stat">0</span><br><span class="route-label">Distância (km)</span></div>
+    <div><span id="res-custo" class="route-stat">0</span><br><span class="route-label">Custo Est. (R$)</span></div>
+    <div><button class="btn-acao" style="background: #3498db; color: white; padding: 10px 20px; border-radius: 12px;" onclick="location.reload()">NOVA</button></div>
 </div>
 
 <div id="map"></div>
 
 <script>
-    let deferredPrompt;
-    window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferredPrompt = e; document.getElementById('btn-install').style.display = 'block'; });
-    
+    const VEICULOS = {
+        yamaha: { "Fazer 250 (FZ25)": 29, "MT-03": 22, "Lander 250": 30 },
+        honda: { "CB 300F": 32, "XRE 300": 26, "CG 160": 41 }
+    };
+
     const App = {
         map: null,
         userLoc: [-3.7319, -38.5267],
+        coords: { origem: null, destino: null },
+        routeLayer: null,
 
         entrar() {
             if(document.getElementById('pass').value === 'FZ25-FOR') {
@@ -154,49 +183,85 @@
                     document.getElementById('nav-header').style.display = 'block';
                     document.getElementById('map').style.display = 'block';
                     this.initMapa();
-                }, 300);
+                }, 400);
             }
         },
 
         initMapa() {
-            this.map = L.map('map', { zoomControl: false }).setView(this.userLoc, 16);
-            Tangram.leafletLayer({
-                scene: 'https://www.nextzen.org/carto/cinnabar-style/cinnabar-style.yaml',
-                attribution: 'Nextzen, OSM'
-            }).addTo(this.map);
-
+            this.map = L.map('map', { zoomControl: false }).setView(this.userLoc, 15);
+            Tangram.leafletLayer({ scene: 'https://www.nextzen.org/carto/cinnabar-style/cinnabar-style.yaml' }).addTo(this.map);
+            
             navigator.geolocation.getCurrentPosition(p => {
-                const pos = [p.coords.latitude, p.coords.longitude];
-                this.map.setView(pos, 16);
-                L.circleMarker(pos, { radius: 8, color: '#fff', weight: 3, fillColor: '#3498db', fillOpacity: 1 }).addTo(this.map);
+                this.userLoc = [p.coords.latitude, p.coords.longitude];
+                this.coords.origem = this.userLoc;
+                this.map.setView(this.userLoc, 16);
+                L.circleMarker(this.userLoc, { radius: 7, color: '#fff', weight: 2, fillColor: '#FF4757', fillOpacity: 1 }).addTo(this.map);
             });
         },
 
-        async buscar(query) {
+        atualizarModelos() {
+            const m = document.getElementById('sel-montadora').value;
+            const s = document.getElementById('sel-modelo');
+            s.innerHTML = '<option value="">Escolha...</option>';
+            if(m) Object.keys(VEICULOS[m]).forEach(mod => s.innerHTML += `<option value="${VEICULOS[m][mod]}">${mod}</option>`);
+        },
+
+        aplicarConsumo() { document.getElementById('consumo').value = document.getElementById('sel-modelo').value; },
+
+        toggleMenu() { 
+            const s = document.getElementById('sidebar');
+            const b = document.getElementById('menu-btn');
+            s.classList.toggle('active');
+            b.innerText = s.classList.contains('active') ? '✕' : '☰';
+        },
+
+        async buscar(query, tipo) {
             if (query.length < 3) return;
-            const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${query}, Fortaleza&limit=5`);
+            const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${query}, Fortaleza&limit=4`);
             const data = await res.json();
-            const container = document.getElementById('suggestions');
+            const container = document.getElementById('sug-' + tipo);
             container.innerHTML = '';
             container.style.display = data.length ? 'block' : 'none';
             
             data.forEach(item => {
                 const div = document.createElement('div');
                 div.className = 'suggestion-item';
-                div.innerText = item.display_name.split(',')[0] + ', ' + item.display_name.split(',')[1];
+                div.innerText = item.display_name.split(',')[0];
                 div.onclick = () => {
-                    const coords = [parseFloat(item.lat), parseFloat(item.lon)];
-                    this.map.flyTo(coords, 17, { duration: 1.5 });
+                    this.coords[tipo] = [parseFloat(item.lat), parseFloat(item.lon)];
+                    document.getElementById('input-' + tipo).value = item.display_name.split(',')[0];
                     container.style.display = 'none';
                 };
                 container.appendChild(div);
             });
         },
 
-        toggleMenu() { document.getElementById('sidebar').classList.toggle('active'); },
-        sos() { window.open(`https://wa.me/?text=Emergência FZ25! Localização: https://www.google.com/maps?q=${this.userLoc[0]},${this.userLoc[1]}`); }
+        async calcularRota() {
+            if(!this.coords.origem || !this.coords.destino) return alert("Defina origem e destino!");
+            
+            const url = `https://router.project-osrm.org/route/v1/driving/${this.coords.origem[1]},${this.coords.origem[0]};${this.coords.destino[1]},${this.coords.destino[0]}?overview=full&geometries=geojson`;
+            const res = await fetch(url);
+            const data = await res.json();
+            
+            if(data.routes && data.routes[0]) {
+                const route = data.routes[0];
+                if(this.routeLayer) this.map.removeLayer(this.routeLayer);
+                
+                this.routeLayer = L.geoJSON(route.geometry, { style: { color: '#FF4757', weight: 6, opacity: 0.8 } }).addTo(this.map);
+                this.map.fitBounds(this.routeLayer.getBounds(), { padding: [50, 50] });
+
+                const dist = (route.distance / 1000).toFixed(1);
+                const custo = (dist / document.getElementById('consumo').value * 6.15).toFixed(2);
+
+                document.getElementById('res-dist').innerText = dist;
+                document.getElementById('res-custo').innerText = custo;
+                document.getElementById('route-info').style.bottom = '20px';
+                document.getElementById('nav-header').style.display = 'none';
+            }
+        },
+
+        sos() { window.open(`https://wa.me/?text=Emergência! Localização: http://maps.google.com/maps?q=${this.userLoc[0]},${this.userLoc[1]}`); }
     };
 </script>
-
 </body>
 </html>
