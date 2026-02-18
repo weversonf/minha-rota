@@ -5,66 +5,132 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#121212">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <title>Minha Rota v22 - Tangram 3D</title>
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Minha Rota v23 - Premium UI</title>
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://unpkg.com/tangram/dist/tangram.min.js"></script>
 
     <style>
-        :root { --cor-principal: #e74c3c; --cor-fundo: #121212; --cor-ui: #1e1e1e; }
-        body { margin: 0; padding: 0; background: var(--cor-fundo); font-family: 'Segoe UI', sans-serif; overflow: hidden; }
-        
-        /* Header Fixo v22 */
-        #header-app { position: fixed; top: 0; left: 0; width: 100%; height: 60px; background: #1a1a1a; z-index: 1000; display: none; align-items: center; justify-content: space-between; padding: 0 15px; box-sizing: border-box; border-bottom: 2px solid var(--cor-principal); }
-        #header-app h1 { font-size: 18px; color: white; margin: 0; font-weight: 800; letter-spacing: 1px; }
+        :root { 
+            --cor-principal: #FF4757; 
+            --cor-fundo: #0F0F0F; 
+            --cor-card: rgba(30, 30, 30, 0.85);
+            --radius: 18px;
+            --shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
 
-        /* Mapa Tangram */
-        #map { position: absolute; top: 60px; bottom: 0; width: 100%; z-index: 1; display: none; }
+        body { 
+            margin: 0; padding: 0; 
+            background: var(--cor-fundo); 
+            font-family: 'Inter', -apple-system, sans-serif; 
+            overflow: hidden; 
+            color: #FFFFFF;
+        }
 
-        /* Interface de Busca */
-        #nav-header { position: fixed; top: 70px; left: 10px; right: 10px; z-index: 500; display: none; }
-        .search-container { background: rgba(30, 30, 30, 0.9); border-radius: 12px; border: 1px solid #444; position: relative; overflow: hidden; }
-        .search-input { width: 100%; background: transparent; border: none; padding: 15px; color: white; font-size: 16px; outline: none; }
-        .suggestions { position: absolute; top: 100%; left: 0; width: 100%; background: #1a1a1a; display: none; max-height: 250px; overflow-y: auto; }
-        .suggestion-item { padding: 12px; border-bottom: 1px solid #333; color: #ccc; cursor: pointer; font-size: 14px; }
+        /* LOGIN MODERNO */
+        #login-screen { 
+            position: fixed; width: 100%; height: 100%; 
+            background: radial-gradient(circle at center, #1e1e1e 0%, #0f0f0f 100%);
+            z-index: 5000; display: flex; align-items: center; justify-content: center; 
+        }
+        .login-card {
+            background: var(--cor-card);
+            backdrop-filter: blur(10px);
+            padding: 40px; border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            text-align: center; width: 80%; max-width: 320px;
+        }
 
-        /* Sidebar */
-        #sidebar { position: fixed; top: 0; left: -320px; width: 300px; height: 100%; background: #1a1a1a; z-index: 2000; transition: 0.4s; padding: 80px 20px 20px; box-sizing: border-box; border-right: 1px solid #333; }
+        /* HEADER PREMIUM */
+        #header-app { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 70px; 
+            background: rgba(15, 15, 15, 0.8); backdrop-filter: blur(12px);
+            z-index: 1000; display: none; align-items: center; justify-content: space-between; 
+            padding: 0 20px; box-sizing: border-box; 
+        }
+        #header-app h1 { font-size: 14px; letter-spacing: 2px; text-transform: uppercase; font-weight: 700; color: #fff; }
+
+        /* INPUTS FLAT DESIGN */
+        input[type="password"], input[type="number"], input[type="text"], select {
+            width: 100%; padding: 16px; margin-bottom: 15px; 
+            background: rgba(255, 255, 255, 0.05); 
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px; color: white; box-sizing: border-box;
+            transition: 0.3s;
+        }
+        input:focus { border-color: var(--cor-principal); outline: none; background: rgba(255, 255, 255, 0.1); }
+
+        /* BUSCA FLOATING CARD */
+        #nav-header { 
+            position: fixed; top: 85px; left: 15px; right: 15px; 
+            z-index: 500; display: none; 
+        }
+        .search-container { 
+            background: var(--cor-card); backdrop-filter: blur(10px);
+            border-radius: var(--radius); box-shadow: var(--shadow);
+            border: 1px solid rgba(255,255,255,0.1); overflow: hidden; 
+        }
+        .search-input { width: 100%; background: transparent; border: none; padding: 18px; color: white; font-size: 16px; outline: none; }
+
+        /* MAPA FULLSCREEN */
+        #map { position: absolute; top: 0; bottom: 0; width: 100%; z-index: 1; display: none; }
+
+        /* SIDEBAR ESTILO DRAWER */
+        #sidebar { 
+            position: fixed; top: 0; left: -100%; width: 85%; max-width: 300px; 
+            height: 100%; background: #121212; z-index: 2000; 
+            transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1); 
+            padding: 100px 25px 25px; box-sizing: border-box; 
+            box-shadow: 20px 0 50px rgba(0,0,0,0.5);
+        }
         #sidebar.active { left: 0; }
-        select, input { width: 100%; padding: 12px; margin-bottom: 15px; background: #2c2c2c; border: 1px solid #444; color: white; border-radius: 8px; }
 
-        #login-screen { position: fixed; width: 100%; height: 100%; background: var(--cor-fundo); z-index: 5000; display: flex; align-items: center; justify-content: center; flex-direction: column; }
-        .btn-acao { width: 100%; padding: 16px; border-radius: 14px; border: none; font-weight: bold; font-size: 16px; cursor: pointer; }
+        /* BOTÕES FLAT */
+        .btn-acao { 
+            padding: 18px; border-radius: 14px; border: none; 
+            font-weight: 700; font-size: 14px; cursor: pointer; 
+            transition: 0.2s; text-transform: uppercase; letter-spacing: 1px;
+        }
+        .btn-acao:active { transform: scale(0.96); }
+        .btn-principal { background: var(--cor-principal); color: white; width: 100%; }
+        .btn-icon { background: rgba(255,255,255,0.1); border-radius: 50%; width: 45px; height: 45px; color: white; display: flex; align-items: center; justify-content: center; font-size: 20px; border: none; }
+
+        .suggestions { background: var(--cor-card); border-top: 1px solid rgba(255,255,255,0.1); display: none; max-height: 200px; overflow-y: auto; }
+        .suggestion-item { padding: 16px; color: #ddd; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 14px; }
     </style>
 </head>
 <body>
 
 <div id="login-screen">
-    <div style="text-align: center; width: 85%;">
-        <h1 style="color: white; margin-bottom: 30px;">Minha Rota v22</h1>
-        <input type="password" id="pass" placeholder="Senha do Grupo" style="text-align: center;">
-        <button onclick="App.entrar()" class="btn-acao" style="background: var(--cor-principal); color: white;">ACESSAR SISTEMA</button>
-        <button id="btn-install" class="btn-acao" style="background: #34495e; color: white; margin-top: 15px; display: none;">📲 INSTALAR APP</button>
+    <div class="login-card">
+        <div style="font-size: 40px; margin-bottom: 10px;">🏍️</div>
+        <h2 style="margin: 0 0 20px 0; font-weight: 800; font-size: 22px;">MINHA ROTA</h2>
+        <input type="password" id="pass" placeholder="Senha FZ25">
+        <button onclick="App.entrar()" class="btn-acao btn-principal">ENTRAR</button>
+        <button id="btn-install" class="btn-acao" style="background: none; color: #888; margin-top: 10px; display: none;">Instalar App</button>
     </div>
 </div>
 
 <header id="header-app">
-    <button onclick="App.toggleMenu()" style="background:none; border:none; color:white; font-size:24px;">☰</button>
-    <h1>MINHA ROTA 3D</h1>
-    <button onclick="App.sos()" style="background:none; border:none; font-size:20px;">🆘</button>
+    <button class="btn-icon" onclick="App.toggleMenu()">☰</button>
+    <h1>Minha Rota v23</h1>
+    <button class="btn-icon" onclick="App.sos()" style="background: rgba(255, 71, 87, 0.2); color: var(--cor-principal);">🆘</button>
 </header>
 
 <div id="sidebar">
-    <h3 style="color: var(--cor-principal);">Veículo</h3>
-    <label style="color:#888; font-size:10px;">CONSUMO MÉDIO (km/L)</label>
-    <input type="number" id="consumo" value="29">
-    <button class="btn-acao" style="background: #27ae60; color: white;" onclick="App.toggleMenu()">SALVAR</button>
+    <h2 style="margin-top: 0; color: var(--cor-principal);">Ajustes</h2>
+    <div style="margin-bottom: 25px;">
+        <label style="color:#666; font-size:11px; font-weight: 700;">CONSUMO FZ25 (km/L)</label>
+        <input type="number" id="consumo" value="29">
+    </div>
+    <button class="btn-acao btn-principal" style="background: #2ed573;" onclick="App.toggleMenu()">CONCLUÍDO</button>
 </div>
 
 <div id="nav-header">
     <div class="search-container">
-        <input type="text" class="search-input" placeholder="Para onde vamos?" oninput="App.buscar(this.value)">
+        <input type="text" class="search-input" placeholder="Para onde vamos hoje?" oninput="App.buscar(this.value)">
         <div id="suggestions" class="suggestions"></div>
     </div>
 </div>
@@ -72,49 +138,37 @@
 <div id="map"></div>
 
 <script>
-    // Registro SW e PWA
     let deferredPrompt;
     window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferredPrompt = e; document.getElementById('btn-install').style.display = 'block'; });
-    document.getElementById('btn-install').addEventListener('click', () => { if(deferredPrompt) deferredPrompt.prompt(); });
-
+    
     const App = {
         map: null,
-        scene: null,
         userLoc: [-3.7319, -38.5267],
 
         entrar() {
             if(document.getElementById('pass').value === 'FZ25-FOR') {
-                document.getElementById('login-screen').style.display = 'none';
-                document.getElementById('header-app').style.display = 'flex';
-                document.getElementById('nav-header').style.display = 'block';
-                document.getElementById('map').style.display = 'block';
-                this.initMapa();
+                document.getElementById('login-screen').style.opacity = '0';
+                setTimeout(() => {
+                    document.getElementById('login-screen').style.display = 'none';
+                    document.getElementById('header-app').style.display = 'flex';
+                    document.getElementById('nav-header').style.display = 'block';
+                    document.getElementById('map').style.display = 'block';
+                    this.initMapa();
+                }, 300);
             }
         },
 
         initMapa() {
-            // Inicializa Leaflet
             this.map = L.map('map', { zoomControl: false }).setView(this.userLoc, 16);
-
-            // Carrega a Camada Tangram (Visual 3D)
-            // Usamos o estilo 'Cinnabar' da Nextzen que é muito bonito para navegação
-            this.scene = Tangram.leafletLayer({
+            Tangram.leafletLayer({
                 scene: 'https://www.nextzen.org/carto/cinnabar-style/cinnabar-style.yaml',
                 attribution: 'Nextzen, OSM'
             }).addTo(this.map);
 
-            // Simulação de inclinação (Pitch) para efeito 3D
-            // Como Leaflet nativo não inclina, o Tangram simula nos tiles
-            this.map.on('zoomend', () => {
-                if(this.map.getZoom() > 15) {
-                    this.scene.scene.config.layers.buildings.visible = true;
-                }
-            });
-
             navigator.geolocation.getCurrentPosition(p => {
                 const pos = [p.coords.latitude, p.coords.longitude];
                 this.map.setView(pos, 16);
-                L.marker(pos, { icon: L.divIcon({ className: 'seta-veiculo', html: '▲', iconSize: [20, 20] }) }).addTo(this.map);
+                L.circleMarker(pos, { radius: 8, color: '#fff', weight: 3, fillColor: '#3498db', fillOpacity: 1 }).addTo(this.map);
             });
         },
 
@@ -124,15 +178,15 @@
             const data = await res.json();
             const container = document.getElementById('suggestions');
             container.innerHTML = '';
-            container.style.display = 'block';
+            container.style.display = data.length ? 'block' : 'none';
             
             data.forEach(item => {
                 const div = document.createElement('div');
                 div.className = 'suggestion-item';
-                div.innerText = item.display_name;
+                div.innerText = item.display_name.split(',')[0] + ', ' + item.display_name.split(',')[1];
                 div.onclick = () => {
                     const coords = [parseFloat(item.lat), parseFloat(item.lon)];
-                    this.map.flyTo(coords, 17);
+                    this.map.flyTo(coords, 17, { duration: 1.5 });
                     container.style.display = 'none';
                 };
                 container.appendChild(div);
@@ -140,14 +194,9 @@
         },
 
         toggleMenu() { document.getElementById('sidebar').classList.toggle('active'); },
-        sos() { window.open(`https://wa.me/?text=Emergencia! Localização: http://maps.google.com/maps?q=${this.userLoc[0]},${this.userLoc[1]}`); }
+        sos() { window.open(`https://wa.me/?text=Emergência FZ25! Localização: https://www.google.com/maps?q=${this.userLoc[0]},${this.userLoc[1]}`); }
     };
 </script>
-
-<style>
-    /* Seta estilo navegação */
-    .seta-veiculo { color: #3498db; font-size: 24px; text-shadow: 0 0 10px #3498db; transform-origin: center; }
-</style>
 
 </body>
 </html>
