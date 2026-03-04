@@ -74,6 +74,8 @@
         import { getFirestore, doc, setDoc, deleteDoc, collection, onSnapshot, addDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         window.FirebaseSDK = { initializeApp, getAuth, onAuthStateChanged, signInAnonymously, signInWithCustomToken, getFirestore, doc, setDoc, deleteDoc, collection, onSnapshot, addDoc };
+        // Trigger de evento para avisar o React que o SDK está pronto
+        window.dispatchEvent(new Event('firebase-ready'));
     </script>
 
     <script type="text/babel">
@@ -99,6 +101,7 @@
         const App = () => {
             const [view, setView] = useState('dashboard');
             const [loading, setLoading] = useState(true);
+            const [error, setError] = useState(null);
             const [user, setUser] = useState(null);
             const [logs, setLogs] = useState([]);
             const [settings, setSettings] = useState({ workStart: "08:00", workEnd: "18:00", workDays: [1, 2, 3, 4, 5] });
@@ -111,44 +114,74 @@
             const appId = typeof __app_id !== 'undefined' ? __app_id : 'extrahours-makro-v4';
 
             useEffect(() => {
-                const { initializeApp, getAuth, onAuthStateChanged, signInAnonymously, signInWithCustomToken, getFirestore } = window.FirebaseSDK;
-                const firebaseConfig = JSON.parse(__firebase_config);
-                const app = initializeApp(firebaseConfig);
-                const auth = getAuth(app);
-                dbRef.current = getFirestore(app);
+                const initApp = async () => {
+                    if (!window.FirebaseSDK) {
+                        // Se o SDK não estiver pronto, espera pelo evento ou tenta novamente em breve
+                        window.addEventListener('firebase-ready', initApp, { once: true });
+                        return;
+                    }
 
-                const initAuth = async () => {
-                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                        await signInWithCustomToken(auth, __initial_auth_token);
-                    } else {
-                        await signInAnonymously(auth);
+                    try {
+                        const { initializeApp, getAuth, onAuthStateChanged, signInAnonymously, signInWithCustomToken, getFirestore } = window.FirebaseSDK;
+                        
+                        // Validar se as variáveis de ambiente existem
+                        if (typeof __firebase_config === 'undefined') {
+                            throw new Error("Configuração do Firebase não encontrada.");
+                        }
+
+                        const firebaseConfig = JSON.parse(__firebase_config);
+                        const app = initializeApp(firebaseConfig);
+                        const auth = getAuth(app);
+                        dbRef.current = getFirestore(app);
+
+                        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                            await signInWithCustomToken(auth, __initial_auth_token);
+                        } else {
+                            await signInAnonymously(auth);
+                        }
+
+                        onAuthStateChanged(auth, (u) => {
+                            if (u) {
+                                setUser(u);
+                                startSync(u.uid);
+                            } else {
+                                setError("Falha na autenticação do utilizador.");
+                                setLoading(false);
+                            }
+                        });
+                    } catch (err) {
+                        console.error("Erro na inicialização:", err);
+                        setError(err.message);
+                        setLoading(false);
                     }
                 };
-                initAuth();
 
-                return onAuthStateChanged(auth, (u) => {
-                    if (u) {
-                        setUser(u);
-                        startSync(u.uid);
-                    }
-                });
+                initApp();
             }, []);
 
             const startSync = (uid) => {
                 const { doc, collection, onSnapshot } = window.FirebaseSDK;
                 
-                // Sync Settings
-                onSnapshot(doc(dbRef.current, 'artifacts', appId, 'users', uid, 'config', 'settings'), (snap) => {
-                    if (snap.exists()) setSettings(snap.data());
-                });
+                try {
+                    // Sync Settings
+                    onSnapshot(doc(dbRef.current, 'artifacts', appId, 'users', uid, 'config', 'settings'), (snap) => {
+                        if (snap.exists()) setSettings(snap.data());
+                    }, (err) => console.error("Erro sync settings:", err));
 
-                // Sync Logs
-                onSnapshot(collection(dbRef.current, 'artifacts', appId, 'users', uid, 'logs'), (snap) => {
-                    const data = snap.docs.map(d => ({ id: d.id, ...d.data() }))
-                        .sort((a, b) => new Date(b.start) - new Date(a.start));
-                    setLogs(data);
+                    // Sync Logs
+                    onSnapshot(collection(dbRef.current, 'artifacts', appId, 'users', uid, 'logs'), (snap) => {
+                        const data = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+                            .sort((a, b) => new Date(b.start) - new Date(a.start));
+                        setLogs(data);
+                        setLoading(false);
+                    }, (err) => {
+                        console.error("Erro sync logs:", err);
+                        setLoading(false);
+                    });
+                } catch (err) {
+                    console.error("Erro ao iniciar sincronização:", err);
                     setLoading(false);
-                });
+                }
             };
 
             // Timer Interval
@@ -198,13 +231,17 @@
                     setTimer({ running: true, startTime: startTs, elapsed: "00:00:00" });
                 } else {
                     const { addDoc, collection } = window.FirebaseSDK;
-                    const log = {
-                        title: timerTitle || "Atividade Sem Nome",
-                        start: new Date(timer.startTime).toISOString(),
-                        end: new Date().toISOString(),
-                        createdAt: new Date().toISOString()
-                    };
-                    await addDoc(collection(dbRef.current, 'artifacts', appId, 'users', user.uid, 'logs'), log);
+                    try {
+                        const log = {
+                            title: timerTitle || "Atividade Sem Nome",
+                            start: new Date(timer.startTime).toISOString(),
+                            end: new Date().toISOString(),
+                            createdAt: new Date().toISOString()
+                        };
+                        await addDoc(collection(dbRef.current, 'artifacts', appId, 'users', user.uid, 'logs'), log);
+                    } catch (e) {
+                        alert("Erro ao guardar atividade: " + e.message);
+                    }
                     setTimer({ running: false, startTime: null, elapsed: "00:00:00" });
                     setTimerTitle("");
                     setTimerStartDate("");
@@ -226,6 +263,16 @@
                 await setDoc(doc(dbRef.current, 'artifacts', appId, 'users', user.uid, 'config', 'settings'), { workStart: ws, workEnd: we, workDays: wd });
                 alert("Configurações sincronizadas!");
             };
+
+            if (error) {
+                return (
+                    <div className="h-screen w-screen flex flex-col items-center justify-center bg-[#010816] p-6 text-center">
+                        <div className="text-red-500 mb-4 font-black uppercase tracking-widest text-sm">Erro Crítico</div>
+                        <div className="text-white opacity-60 text-xs mb-8 max-w-md leading-relaxed">{error}</div>
+                        <button onClick={() => window.location.reload()} className="bg-white/10 px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-white/20 transition">Recarregar App</button>
+                    </div>
+                );
+            }
 
             if (loading) return <div className="h-screen w-screen flex items-center justify-center bg-[#010816]"><div className="w-12 h-12 border-4 border-[#ED1C24] border-t-transparent rounded-full animate-spin"></div></div>;
 
@@ -289,7 +336,7 @@
                                         <div className="makro-card p-8 text-center flex flex-col items-center justify-center h-1/2">
                                             <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2">Total Extra / Mês</h3>
                                             <div className="text-5xl font-black text-[#ED1C24]">{stats.hours}<span className="text-xl opacity-30">H</span> {stats.mins}<span className="text-xl opacity-30">M</span></div>
-                                            <p className="text-[9px] font-bold text-gray-600 mt-4 uppercase">Horas acumuladas fora da Makro</p>
+                                            <p className="text-[9px] font-bold text-gray-600 mt-4 uppercase text-center">Horas acumuladas fora da Makro</p>
                                         </div>
                                         <div className="makro-card p-8 text-center flex flex-col items-center justify-center h-1/2">
                                             <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-4">Janela Atual</h3>
