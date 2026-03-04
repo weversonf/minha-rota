@@ -3,528 +3,433 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ExtraHours - Makro Edition</title>
+    <title>ExtraHours - Makro Edition v04</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;700;900&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18.2.0/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { 
+            font-family: 'Montserrat', sans-serif; 
+            background-color: #010816; 
+            color: #f1f5f9; 
+            margin: 0; 
+            overflow-x: hidden;
+        }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 10px; }
         
-        :root {
-            --makro-blue: #003366;
-            --makro-light-blue: #e6f0ff;
-            --nps-green: #10b981;
-            --nps-red: #ef4444;
-        }
-
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f3f4f6;
-            color: #111827;
-        }
-
-        .makro-header {
-            background-color: var(--makro-blue);
-            color: white;
-        }
-
-        .card {
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-            border: 1px solid #e5e7eb;
-        }
-
-        .btn-makro {
-            background-color: var(--makro-blue);
-            color: white;
-            transition: all 0.2s;
-        }
-
-        .btn-makro:hover {
-            background-color: #002244;
-        }
-
-        .btn-stop {
-            background-color: var(--nps-red);
-            color: white;
+        .makro-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 40px;
+            backdrop-blur: 10px;
         }
 
         .timer-display {
             font-variant-numeric: tabular-nums;
-            letter-spacing: -1px;
+            letter-spacing: -4px;
+            line-height: 1;
         }
 
-        .status-badge {
-            padding: 2px 8px;
-            border-radius: 9999px;
-            font-size: 10px;
-            font-weight: 700;
-            text-transform: uppercase;
+        @keyframes pulse-red {
+            0% { box-shadow: 0 0 0 0 rgba(237, 28, 36, 0.4); }
+            70% { box-shadow: 0 0 0 15px rgba(237, 28, 36, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(237, 28, 36, 0); }
+        }
+        .active-timer {
+            animation: pulse-red 2s infinite;
         }
 
-        .bg-extra { background-color: #d1fae5; color: #065f46; }
-        .bg-work { background-color: #fee2e2; color: #991b1b; }
-
-        input, select {
-            border: 1px solid #d1d5db;
-            border-radius: 6px;
-            padding: 10px;
-            font-size: 14px;
-            outline: none;
+        input, select, textarea {
+            background: rgba(255, 255, 255, 0.08) !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            border-radius: 16px !important;
+            color: white !important;
+            outline: none !important;
+            transition: all 0.3s ease;
         }
+        input:focus { border-color: #ED1C24 !important; }
+
+        .btn-makro-primary {
+            background: #ED1C24;
+            transition: all 0.3s ease;
+        }
+        .btn-makro-primary:hover { background: #c1141b; transform: translateY(-2px); }
         
-        input:focus {
-            border-color: var(--makro-blue);
-            ring: 1px var(--makro-blue);
-        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-fade { animation: fadeIn 0.4s ease forwards; }
     </style>
 </head>
-<body class="min-h-screen">
+<body>
+    <div id="root"></div>
 
-    <!-- Header Estilo Corporativo Makro -->
-    <header class="makro-header shadow-lg mb-8">
-        <div class="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
-            <div class="flex items-center gap-3">
-                <div class="w-8 h-8 bg-white rounded flex items-center justify-center">
-                    <span class="text-[#003366] font-bold text-xl">M</span>
-                </div>
-                <h1 class="text-lg font-bold tracking-tight uppercase">ExtraHours <span class="font-light opacity-70">| Personal Tracker</span></h1>
-            </div>
-            <nav class="flex gap-6 text-sm font-medium">
-                <button onclick="switchTab('dashboard')" class="hover:opacity-80 border-b-2 border-transparent hover:border-white py-1">Painel</button>
-                <button onclick="switchTab('history')" class="hover:opacity-80 border-b-2 border-transparent hover:border-white py-1">Registros</button>
-                <button onclick="switchTab('settings')" class="hover:opacity-80 border-b-2 border-transparent hover:border-white py-1">Configurações</button>
-            </nav>
-        </div>
-    </header>
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, deleteDoc, collection, onSnapshot, addDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-    <main class="max-w-6xl mx-auto px-6 pb-12">
-        
-        <!-- Tab: Dashboard -->
-        <div id="tab-dashboard" class="space-y-6">
-            
-            <!-- Cronômetro e Info Rápida -->
-            <div class="grid md:grid-cols-4 gap-6">
-                
-                <!-- Cronômetro com Opção de Início Retroativo -->
-                <div class="card p-6 md:col-span-2 flex flex-col justify-between">
-                    <div>
-                        <div class="flex justify-between items-start mb-4">
-                            <h2 class="text-xs font-bold text-gray-500 uppercase tracking-widest text-wrap">Acompanhamento em Tempo Real</h2>
-                            <div id="timer-status" class="hidden flex items-center gap-2 text-green-500 font-bold text-[10px] uppercase animate-pulse">
-                                <span class="w-2 h-2 bg-green-500 rounded-full"></span> Ativo
-                            </div>
-                        </div>
-                        <div class="flex items-baseline gap-4 mb-6">
-                            <span id="timer-display" class="timer-display text-6xl font-bold text-gray-800">00:00:00</span>
-                        </div>
-                    </div>
-                    
-                    <div class="space-y-4">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                            <div class="flex flex-col gap-1">
-                                <label class="text-[10px] font-bold text-gray-400 uppercase">Descrição da Atividade</label>
-                                <input type="text" id="timer-title" placeholder="Ex: Viagem Fazer 250">
-                            </div>
-                            <div class="flex flex-col gap-1" id="timer-start-container">
-                                <label class="text-[10px] font-bold text-gray-400 uppercase">Horário de Início</label>
-                                <input type="datetime-local" id="timer-start-input">
-                            </div>
-                        </div>
-                        <button id="btn-timer-action" onclick="toggleTimer()" class="btn-makro w-full py-3 rounded-md font-bold uppercase text-xs tracking-widest shadow-md">Iniciar Atividade</button>
-                    </div>
-                </div>
+        window.FirebaseSDK = { initializeApp, getAuth, onAuthStateChanged, signInAnonymously, signInWithCustomToken, getFirestore, doc, setDoc, deleteDoc, collection, onSnapshot, addDoc };
+    </script>
 
-                <!-- KPI: Total Extra -->
-                <div class="card p-6 flex flex-col justify-center items-center">
-                    <h2 class="text-xs font-bold text-gray-500 uppercase mb-2 tracking-widest">Tempo Extra (Mês)</h2>
-                    <span id="total-hours" class="text-4xl font-bold text-[#003366]">00:00</span>
-                    <p class="text-[10px] text-gray-400 mt-2 uppercase text-center">Horas acumuladas fora do expediente Makro</p>
-                </div>
+    <script type="text/babel">
+        const { useState, useEffect, useMemo, useRef } = React;
 
-                <!-- KPI: Janela Atual -->
-                <div class="card p-6 flex flex-col justify-center items-center">
-                    <h2 class="text-xs font-bold text-gray-500 uppercase mb-2 tracking-widest">Status da Janela</h2>
-                    <div id="window-status" class="text-sm font-bold px-4 py-2 rounded-lg">
-                        Sincronizando...
-                    </div>
-                    <p class="text-[10px] text-gray-400 mt-2 uppercase" id="current-time-info"></p>
-                </div>
-            </div>
-
-            <div class="grid md:grid-cols-3 gap-6">
-                <!-- Registro Manual de Atividades Passadas -->
-                <div class="card p-6">
-                    <h2 class="text-xs font-bold text-gray-500 uppercase mb-4 tracking-widest">Lançamento Retroativo</h2>
-                    <form id="manual-form" class="space-y-4">
-                        <div class="flex flex-col gap-1">
-                            <label class="text-[10px] font-bold text-gray-400 uppercase">Título</label>
-                            <input type="text" id="m-title" placeholder="Ex: Estudo de Marketing" required>
-                        </div>
-                        <div class="grid grid-cols-1 gap-2">
-                            <div class="flex flex-col gap-1">
-                                <label class="text-[10px] font-bold text-gray-400 uppercase">Data/Hora Início</label>
-                                <input type="datetime-local" id="m-start" required>
-                            </div>
-                            <div class="flex flex-col gap-1">
-                                <label class="text-[10px] font-bold text-gray-400 uppercase">Data/Hora Fim</label>
-                                <input type="datetime-local" id="m-end" required>
-                            </div>
-                        </div>
-                        <button type="submit" class="btn-makro w-full py-3 rounded font-bold text-xs uppercase tracking-widest">Salvar no Histórico</button>
-                    </form>
-                </div>
-
-                <!-- Lista Recente -->
-                <div class="card p-6 md:col-span-2">
-                    <h2 class="text-xs font-bold text-gray-500 uppercase mb-4 tracking-widest">Últimas Atividades</h2>
-                    <div id="recent-list" class="space-y-2">
-                        <!-- Conteúdo via JS -->
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Tab: History -->
-        <div id="tab-history" class="hidden">
-            <div class="card overflow-hidden">
-                <div class="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50">
-                    <h2 class="font-bold text-gray-700 uppercase text-sm tracking-widest">Log Geral de Horas</h2>
-                    <button onclick="clearAll()" class="text-xs text-red-500 font-bold hover:underline">LIMPAR BASE DE DADOS</button>
-                </div>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left">
-                        <thead class="bg-gray-50 text-[10px] uppercase text-gray-400 font-bold">
-                            <tr>
-                                <th class="px-6 py-4">Início</th>
-                                <th class="px-6 py-4">Atividade</th>
-                                <th class="px-6 py-4">Duração</th>
-                                <th class="px-6 py-4">Classificação</th>
-                                <th class="px-6 py-4 text-right">Ação</th>
-                            </tr>
-                        </thead>
-                        <tbody id="full-history-table" class="text-sm divide-y divide-gray-100">
-                            <!-- Conteúdo via JS -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <!-- Tab: Settings -->
-        <div id="tab-settings" class="hidden">
-            <div class="card p-8 max-w-2xl mx-auto">
-                <h2 class="text-lg font-bold mb-6 text-[#003366]">Configurações de Jornada Makro</h2>
-                <div class="space-y-6">
-                    <div class="grid grid-cols-2 gap-6">
-                        <div class="flex flex-col gap-2">
-                            <label class="text-xs font-bold text-gray-500 uppercase">Entrada no Trabalho</label>
-                            <input type="time" id="work-start" value="08:00">
-                        </div>
-                        <div class="flex flex-col gap-2">
-                            <label class="text-xs font-bold text-gray-500 uppercase">Saída do Trabalho</label>
-                            <input type="time" id="work-end" value="18:00">
-                        </div>
-                    </div>
-                    
-                    <div class="flex flex-col gap-3">
-                        <label class="text-xs font-bold text-gray-500 uppercase">Dias de Expediente</label>
-                        <div class="flex flex-wrap gap-4">
-                            <label class="flex items-center gap-2 text-sm cursor-pointer"><input type="checkbox" class="work-day" value="1" checked> Seg</label>
-                            <label class="flex items-center gap-2 text-sm cursor-pointer"><input type="checkbox" class="work-day" value="2" checked> Ter</label>
-                            <label class="flex items-center gap-2 text-sm cursor-pointer"><input type="checkbox" class="work-day" value="3" checked> Qua</label>
-                            <label class="flex items-center gap-2 text-sm cursor-pointer"><input type="checkbox" class="work-day" value="4" checked> Qui</label>
-                            <label class="flex items-center gap-2 text-sm cursor-pointer"><input type="checkbox" class="work-day" value="5" checked> Sex</label>
-                            <label class="flex items-center gap-2 text-sm cursor-pointer"><input type="checkbox" class="work-day" value="6"> Sáb</label>
-                            <label class="flex items-center gap-2 text-sm cursor-pointer"><input type="checkbox" class="work-day" value="0"> Dom</label>
-                        </div>
-                    </div>
-                    
-                    <button onclick="saveSettings()" class="btn-makro w-full py-4 rounded font-bold uppercase tracking-widest shadow-md">Salvar Definições</button>
-                    <p id="settings-msg" class="text-center text-xs text-green-600 font-bold hidden">Configurações atualizadas com sucesso.</p>
-                </div>
-            </div>
-        </div>
-
-    </main>
-
-    <script>
-        // --- State Management ---
-        let state = {
-            logs: JSON.parse(localStorage.getItem('makro_extra_logs_v2')) || [],
-            settings: JSON.parse(localStorage.getItem('makro_extra_settings_v2')) || {
-                workStart: "08:00",
-                workEnd: "18:00",
-                workDays: [1, 2, 3, 4, 5]
-            },
-            timer: {
-                running: false,
-                startTime: null,
-                intervalId: null
-            }
-        };
-
-        // --- Initialization ---
-        window.onload = () => {
-            loadSettingsToUI();
-            renderLogs();
-            updateTotal();
-            checkCurrentWindow();
-            resetTimerInput();
-            setInterval(checkCurrentWindow, 60000);
-            
-            // Setup manual form default dates
-            const now = new Date();
-            document.getElementById('m-start').value = new Date(now.getTime() - 3600000).toISOString().slice(0, 16);
-            document.getElementById('m-end').value = now.toISOString().slice(0, 16);
-        };
-
-        function resetTimerInput() {
-            if (!state.timer.running) {
-                const now = new Date();
-                // Ajusta para o fuso horário local no formato datetime-local
-                const tzOffset = now.getTimezoneOffset() * 60000;
-                const localISODate = new Date(now.getTime() - tzOffset).toISOString().slice(0, 16);
-                document.getElementById('timer-start-input').value = localISODate;
-            }
-        }
-
-        // --- Timer Logic ---
-        function toggleTimer() {
-            const btn = document.getElementById('btn-timer-action');
-            const titleInput = document.getElementById('timer-title');
-            const startInput = document.getElementById('timer-start-input');
-            const statusIndicator = document.getElementById('timer-status');
-
-            if (!state.timer.running) {
-                // START
-                const customStartTime = new Date(startInput.value).getTime();
-                
-                // Validação básica
-                if (isNaN(customStartTime)) {
-                    alert("Por favor, insira uma data de início válida.");
-                    return;
+        const Icon = ({ name, size = 18, className = "" }) => {
+            const iconRef = useRef(null);
+            useEffect(() => {
+                if (window.lucide && iconRef.current) {
+                    iconRef.current.innerHTML = '';
+                    const i = document.createElement('i');
+                    const lucideName = name.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
+                    i.setAttribute('data-lucide', lucideName);
+                    iconRef.current.appendChild(i);
+                    window.lucide.createIcons({
+                        attrs: { width: size, height: size, class: className, 'stroke-width': 2 }
+                    });
                 }
+            }, [name, size, className]);
+            return <span ref={iconRef} className="inline-flex items-center justify-center leading-none"></span>;
+        };
 
-                state.timer.running = true;
-                state.timer.startTime = customStartTime;
-                
-                btn.innerText = "Parar e Salvar";
-                btn.classList.add('btn-stop');
-                statusIndicator.classList.remove('hidden');
-                startInput.disabled = true;
-                
-                // Update display immediately then every second
-                updateTimerDisplay();
-                state.timer.intervalId = setInterval(updateTimerDisplay, 1000);
-            } else {
-                // STOP
-                clearInterval(state.timer.intervalId);
-                const endTime = Date.now();
-                
-                const newLog = {
-                    id: Date.now(),
-                    title: titleInput.value || "Atividade Sem Nome",
-                    start: new Date(state.timer.startTime).toISOString(),
-                    end: new Date(endTime).toISOString()
+        const App = () => {
+            const [view, setView] = useState('dashboard');
+            const [loading, setLoading] = useState(true);
+            const [user, setUser] = useState(null);
+            const [logs, setLogs] = useState([]);
+            const [settings, setSettings] = useState({ workStart: "08:00", workEnd: "18:00", workDays: [1, 2, 3, 4, 5] });
+            const [timer, setTimer] = useState({ running: false, startTime: null, elapsed: "00:00:00" });
+            const [timerTitle, setTimerTitle] = useState("");
+            const [timerStartDate, setTimerStartDate] = useState("");
+
+            // Firebase Refs
+            const dbRef = useRef(null);
+            const appId = typeof __app_id !== 'undefined' ? __app_id : 'extrahours-makro-v4';
+
+            useEffect(() => {
+                const { initializeApp, getAuth, onAuthStateChanged, signInAnonymously, signInWithCustomToken, getFirestore } = window.FirebaseSDK;
+                const firebaseConfig = JSON.parse(__firebase_config);
+                const app = initializeApp(firebaseConfig);
+                const auth = getAuth(app);
+                dbRef.current = getFirestore(app);
+
+                const initAuth = async () => {
+                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                        await signInWithCustomToken(auth, __initial_auth_token);
+                    } else {
+                        await signInAnonymously(auth);
+                    }
                 };
+                initAuth();
 
-                state.logs.unshift(newLog);
-                saveLogs();
-                renderLogs();
-                updateTotal();
+                return onAuthStateChanged(auth, (u) => {
+                    if (u) {
+                        setUser(u);
+                        startSync(u.uid);
+                    }
+                });
+            }, []);
 
-                // Reset UI State
-                state.timer.running = false;
-                state.timer.startTime = null;
-                btn.innerText = "Iniciar Atividade";
-                btn.classList.remove('btn-stop');
-                statusIndicator.classList.add('hidden');
-                document.getElementById('timer-display').innerText = "00:00:00";
-                titleInput.value = "";
-                startInput.disabled = false;
-                resetTimerInput();
-            }
-        }
+            const startSync = (uid) => {
+                const { doc, collection, onSnapshot } = window.FirebaseSDK;
+                
+                // Sync Settings
+                onSnapshot(doc(dbRef.current, 'artifacts', appId, 'users', uid, 'config', 'settings'), (snap) => {
+                    if (snap.exists()) setSettings(snap.data());
+                });
 
-        function updateTimerDisplay() {
-            const now = Date.now();
-            let diff = now - state.timer.startTime;
-            
-            // Caso o início seja no futuro (por erro do usuário), trava em zero
-            if (diff < 0) diff = 0;
-            
-            const hours = Math.floor(diff / 3600000);
-            const minutes = Math.floor((diff % 3600000) / 60000);
-            const seconds = Math.floor((diff % 60000) / 1000);
-
-            document.getElementById('timer-display').innerText = 
-                `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-        }
-
-        // --- Core Helpers ---
-        function isExtraTime(dateStr) {
-            const date = new Date(dateStr);
-            const day = date.getDay();
-            const time = date.getHours() * 60 + date.getMinutes();
-            
-            const [sh, sm] = state.settings.workStart.split(':').map(Number);
-            const [eh, em] = state.settings.workEnd.split(':').map(Number);
-            
-            const workStartTotal = sh * 60 + sm;
-            const workEndTotal = eh * 60 + em;
-
-            if (!state.settings.workDays.includes(day)) return true;
-            if (time < workStartTotal || time >= workEndTotal) return true;
-            return false;
-        }
-
-        function checkCurrentWindow() {
-            const now = new Date();
-            const extra = isExtraTime(now.toISOString());
-            const statusEl = document.getElementById('window-status');
-            const timeInfo = document.getElementById('current-time-info');
-
-            if (extra) {
-                statusEl.innerText = "FORA DO EXPEDIENTE";
-                statusEl.className = "text-sm font-bold px-4 py-2 rounded-lg bg-green-100 text-green-700";
-            } else {
-                statusEl.innerText = "HORÁRIO COMERCIAL";
-                statusEl.className = "text-sm font-bold px-4 py-2 rounded-lg bg-red-100 text-red-700";
-            }
-            timeInfo.innerText = now.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
-        }
-
-        // --- UI Rendering ---
-        function renderLogs() {
-            const recentList = document.getElementById('recent-list');
-            const historyTable = document.getElementById('full-history-table');
-
-            if (state.logs.length === 0) {
-                recentList.innerHTML = `<p class="text-xs text-gray-400 italic py-4">Nenhum registro encontrado no banco de dados.</p>`;
-                historyTable.innerHTML = `<tr><td colspan="5" class="px-6 py-10 text-center text-gray-400 italic">Histórico de logs vazio.</td></tr>`;
-                return;
-            }
-
-            // Dashboard View
-            recentList.innerHTML = state.logs.slice(0, 4).map(log => {
-                const diff = new Date(log.end) - new Date(log.start);
-                const m = Math.max(0, Math.floor(diff / 60000));
-                const extra = isExtraTime(log.start);
-                return `
-                    <div class="flex justify-between items-center p-3 border border-gray-100 rounded hover:bg-gray-50 transition">
-                        <div>
-                            <span class="text-xs font-bold text-gray-800">${log.title}</span>
-                            <div class="flex items-center gap-2 mt-1">
-                                <span class="status-badge ${extra ? 'bg-extra' : 'bg-work'}">${extra ? 'Extra' : 'Expediente'}</span>
-                                <span class="text-[10px] text-gray-400">${new Date(log.start).toLocaleDateString()}</span>
-                            </div>
-                        </div>
-                        <span class="font-mono text-sm font-bold text-gray-600">${Math.floor(m/60)}h ${m%60}m</span>
-                    </div>
-                `;
-            }).join('');
-
-            // Full History Table
-            historyTable.innerHTML = state.logs.map(log => {
-                const diff = new Date(log.end) - new Date(log.start);
-                const m = Math.max(0, Math.floor(diff / 60000));
-                const extra = isExtraTime(log.start);
-                return `
-                    <tr class="hover:bg-gray-50">
-                        <td class="px-6 py-4 text-gray-500 text-xs">${new Date(log.start).toLocaleString()}</td>
-                        <td class="px-6 py-4 font-semibold">${log.title}</td>
-                        <td class="px-6 py-4 font-mono">${Math.floor(m/60)}h ${m%60}m</td>
-                        <td class="px-6 py-4">
-                            <span class="status-badge ${extra ? 'bg-extra' : 'bg-work'}">${extra ? '✓ Atividade Pessoal' : '⚠ Horário Makro'}</span>
-                        </td>
-                        <td class="px-6 py-4 text-right">
-                            <button onclick="deleteLog(${log.id})" class="text-red-400 hover:text-red-600 font-bold text-xs">REMOVER</button>
-                        </td>
-                    </tr>
-                `;
-            }).join('');
-        }
-
-        function updateTotal() {
-            let totalMins = 0;
-            const now = new Date();
-            const currM = now.getMonth();
-            const currY = now.getFullYear();
-
-            state.logs.forEach(log => {
-                const logDate = new Date(log.start);
-                if (logDate.getMonth() === currM && logDate.getFullYear() === currY && isExtraTime(log.start)) {
-                    const dur = (new Date(log.end) - new Date(log.start)) / 60000;
-                    totalMins += Math.max(0, dur);
-                }
-            });
-
-            const h = Math.floor(totalMins / 60);
-            const m = Math.floor(totalMins % 60);
-            document.getElementById('total-hours').innerText = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
-        }
-
-        // --- Event Handlers & Persistent Storage ---
-        document.getElementById('manual-form').onsubmit = (e) => {
-            e.preventDefault();
-            const log = {
-                id: Date.now(),
-                title: document.getElementById('m-title').value,
-                start: document.getElementById('m-start').value,
-                end: document.getElementById('m-end').value
+                // Sync Logs
+                onSnapshot(collection(dbRef.current, 'artifacts', appId, 'users', uid, 'logs'), (snap) => {
+                    const data = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+                        .sort((a, b) => new Date(b.start) - new Date(a.start));
+                    setLogs(data);
+                    setLoading(false);
+                });
             };
-            state.logs.unshift(log);
-            saveLogs();
-            renderLogs();
-            updateTotal();
-            e.target.reset();
+
+            // Timer Interval
+            useEffect(() => {
+                let interval;
+                if (timer.running) {
+                    interval = setInterval(() => {
+                        const diff = Date.now() - timer.startTime;
+                        const h = Math.floor(diff / 3600000);
+                        const m = Math.floor((diff % 3600000) / 60000);
+                        const s = Math.floor((diff % 60000) / 1000);
+                        setTimer(t => ({ ...t, elapsed: `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}` }));
+                    }, 1000);
+                }
+                return () => clearInterval(interval);
+            }, [timer.running, timer.startTime]);
+
+            // Helper: Is Extra Time?
+            const checkIsExtra = (dateStr) => {
+                const d = new Date(dateStr);
+                const time = d.getHours() * 60 + d.getMinutes();
+                const [sh, sm] = settings.workStart.split(':').map(Number);
+                const [eh, em] = settings.workEnd.split(':').map(Number);
+                if (!settings.workDays.includes(d.getDay())) return true;
+                return time < (sh * 60 + sm) || time >= (eh * 60 + em);
+            };
+
+            const stats = useMemo(() => {
+                const now = new Date();
+                let totalMins = 0;
+                logs.forEach(l => {
+                    const start = new Date(l.start);
+                    if (start.getMonth() === now.getMonth() && start.getFullYear() === now.getFullYear() && checkIsExtra(l.start)) {
+                        totalMins += (new Date(l.end) - start) / 60000;
+                    }
+                });
+                return { 
+                    hours: String(Math.floor(totalMins / 60)).padStart(2, '0'),
+                    mins: String(Math.round(totalMins % 60)).padStart(2, '0'),
+                    isExtraNow: checkIsExtra(new Date().toISOString())
+                };
+            }, [logs, settings]);
+
+            const handleToggleTimer = async () => {
+                if (!timer.running) {
+                    const startTs = timerStartDate ? new Date(timerStartDate).getTime() : Date.now();
+                    setTimer({ running: true, startTime: startTs, elapsed: "00:00:00" });
+                } else {
+                    const { addDoc, collection } = window.FirebaseSDK;
+                    const log = {
+                        title: timerTitle || "Atividade Sem Nome",
+                        start: new Date(timer.startTime).toISOString(),
+                        end: new Date().toISOString(),
+                        createdAt: new Date().toISOString()
+                    };
+                    await addDoc(collection(dbRef.current, 'artifacts', appId, 'users', user.uid, 'logs'), log);
+                    setTimer({ running: false, startTime: null, elapsed: "00:00:00" });
+                    setTimerTitle("");
+                    setTimerStartDate("");
+                }
+            };
+
+            const deleteLog = async (id) => {
+                const { doc, deleteDoc } = window.FirebaseSDK;
+                if(confirm("Eliminar este registo?")) {
+                    await deleteDoc(doc(dbRef.current, 'artifacts', appId, 'users', user.uid, 'logs', id));
+                }
+            };
+
+            const saveSettings = async () => {
+                const { doc, setDoc } = window.FirebaseSDK;
+                const ws = document.getElementById('work-start').value;
+                const we = document.getElementById('work-end').value;
+                const wd = Array.from(document.querySelectorAll('.work-day:checked')).map(c => parseInt(c.value));
+                await setDoc(doc(dbRef.current, 'artifacts', appId, 'users', user.uid, 'config', 'settings'), { workStart: ws, workEnd: we, workDays: wd });
+                alert("Configurações sincronizadas!");
+            };
+
+            if (loading) return <div className="h-screen w-screen flex items-center justify-center bg-[#010816]"><div className="w-12 h-12 border-4 border-[#ED1C24] border-t-transparent rounded-full animate-spin"></div></div>;
+
+            return (
+                <div className="min-h-screen flex flex-col">
+                    {/* Header Premium Makro */}
+                    <header className="p-6 flex flex-col items-center bg-black/40 border-b border-white/5 backdrop-blur-md sticky top-0 z-50">
+                        <img src="https://makroengenharia.com.br/wp-content/uploads/2023/03/logo-1.png" className="h-10 mb-2" />
+                        <div className="flex items-center gap-2 opacity-40">
+                            <span className="text-[10px] tracking-[5px] font-bold uppercase">ExtraHours | Controle Pessoal</span>
+                            <div className={`w-1.5 h-1.5 rounded-full ${user ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                        </div>
+                        
+                        <nav className="flex gap-8 mt-6 text-[11px] font-black uppercase tracking-widest">
+                            <button onClick={() => setView('dashboard')} className={`pb-1 border-b-2 transition ${view === 'dashboard' ? 'border-[#ED1C24] text-white' : 'border-transparent text-white/40'}`}>Painel</button>
+                            <button onClick={() => setView('history')} className={`pb-1 border-b-2 transition ${view === 'history' ? 'border-[#ED1C24] text-white' : 'border-transparent text-white/40'}`}>Registros</button>
+                            <button onClick={() => setView('settings')} className={`pb-1 border-b-2 transition ${view === 'settings' ? 'border-[#ED1C24] text-white' : 'border-transparent text-white/40'}`}>Configurações</button>
+                        </nav>
+                    </header>
+
+                    <main className="flex-1 p-6 md:p-12 max-w-7xl mx-auto w-full space-y-10">
+                        
+                        {view === 'dashboard' && (
+                            <div className="space-y-10 animate-fade">
+                                {/* Timer Section */}
+                                <div className="grid lg:grid-cols-3 gap-10">
+                                    <div className={`makro-card p-10 lg:col-span-2 flex flex-col items-center justify-center transition-all ${timer.running ? 'active-timer' : ''}`}>
+                                        <h2 className="text-[10px] font-black text-gray-500 uppercase tracking-[4px] mb-8">Atividade em Curso</h2>
+                                        <div className="timer-display text-7xl md:text-9xl font-black mb-10 text-white">
+                                            {timer.elapsed}
+                                        </div>
+                                        
+                                        <div className="w-full max-w-xl space-y-6">
+                                            <div className="grid md:grid-cols-2 gap-4">
+                                                <input 
+                                                    type="text" 
+                                                    placeholder="O que está fazendo?" 
+                                                    className="w-full p-4"
+                                                    value={timerTitle}
+                                                    onChange={e => setTimerTitle(e.target.value)}
+                                                    disabled={timer.running}
+                                                />
+                                                <input 
+                                                    type="datetime-local" 
+                                                    className="w-full p-4"
+                                                    value={timerStartDate}
+                                                    onChange={e => setTimerStartDate(e.target.value)}
+                                                    disabled={timer.running}
+                                                />
+                                            </div>
+                                            <button 
+                                                onClick={handleToggleTimer}
+                                                className={`w-full py-5 rounded-3xl font-black uppercase tracking-widest text-sm shadow-2xl transition active:scale-95 ${timer.running ? 'bg-red-600' : 'bg-[#ED1C24]'}`}
+                                            >
+                                                {timer.running ? 'Encerrar Sessão' : 'Iniciar Atividade'}
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-6">
+                                        <div className="makro-card p-8 text-center flex flex-col items-center justify-center h-1/2">
+                                            <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2">Total Extra / Mês</h3>
+                                            <div className="text-5xl font-black text-[#ED1C24]">{stats.hours}<span className="text-xl opacity-30">H</span> {stats.mins}<span className="text-xl opacity-30">M</span></div>
+                                            <p className="text-[9px] font-bold text-gray-600 mt-4 uppercase">Horas acumuladas fora da Makro</p>
+                                        </div>
+                                        <div className="makro-card p-8 text-center flex flex-col items-center justify-center h-1/2">
+                                            <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-4">Janela Atual</h3>
+                                            <div className={`px-6 py-2 rounded-full text-[11px] font-black ${stats.isExtraNow ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'}`}>
+                                                {stats.isExtraNow ? '✓ FORA DO EXPEDIENTE' : '⚠ EM HORÁRIO MAKRO'}
+                                            </div>
+                                            <p className="text-[10px] text-gray-400 mt-4 font-bold">{new Date().toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'})}</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Recent Items */}
+                                <div className="makro-card p-8">
+                                    <div className="flex justify-between items-center mb-8">
+                                        <h2 className="text-xs font-black text-gray-500 uppercase tracking-widest">Atividades Recentes</h2>
+                                        <button onClick={() => setView('history')} className="text-[10px] font-black text-[#ED1C24] uppercase tracking-tighter">Ver Histórico</button>
+                                    </div>
+                                    <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+                                        {logs.slice(0, 4).map(log => {
+                                            const m = Math.floor((new Date(log.end) - new Date(log.start)) / 60000);
+                                            const isExtra = checkIsExtra(log.start);
+                                            return (
+                                                <div key={log.id} className="bg-white/5 border border-white/5 p-6 rounded-[30px] flex flex-col justify-between hover:border-white/20 transition group">
+                                                    <div>
+                                                        <h4 className="text-sm font-black text-white truncate mb-2">{log.title}</h4>
+                                                        <span className={`text-[9px] font-black px-2 py-0.5 rounded-full ${isExtra ? 'bg-green-500/20 text-green-500' : 'bg-red-500/20 text-red-500'}`}>
+                                                            {isExtra ? 'EXTRA' : 'MAKRO'}
+                                                        </span>
+                                                    </div>
+                                                    <div className="mt-6 flex justify-between items-end">
+                                                        <span className="text-[10px] text-gray-500 font-bold">{new Date(log.start).toLocaleDateString('pt-BR')}</span>
+                                                        <span className="text-xl font-black text-white">{Math.floor(m/60)}h {m%60}m</span>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                        {logs.length === 0 && <p className="col-span-full text-center py-10 text-gray-600 text-xs italic font-bold">Nenhuma atividade registrada na nuvem.</p>}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {view === 'history' && (
+                            <div className="makro-card overflow-hidden animate-fade">
+                                <div className="p-10 border-b border-white/5 flex justify-between items-center bg-white/5">
+                                    <h2 className="font-black text-white uppercase text-xs tracking-widest">Log Geral de Performance</h2>
+                                </div>
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-left">
+                                        <thead className="bg-black/20 text-[10px] uppercase text-gray-500 font-black">
+                                            <tr>
+                                                <th className="px-10 py-6">Data/Hora</th>
+                                                <th className="px-10 py-6">Atividade</th>
+                                                <th className="px-10 py-6">Duração</th>
+                                                <th className="px-10 py-6">Status</th>
+                                                <th className="px-10 py-6 text-right">Ação</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="text-sm divide-y divide-white/5">
+                                            {logs.map(log => {
+                                                const m = Math.floor((new Date(log.end) - new Date(log.start)) / 60000);
+                                                const isExtra = checkIsExtra(log.start);
+                                                return (
+                                                    <tr key={log.id} className="hover:bg-white/5 transition-colors">
+                                                        <td className="px-10 py-6 text-gray-500 text-[11px] font-bold">{new Date(log.start).toLocaleString()}</td>
+                                                        <td className="px-10 py-6 font-bold">{log.title}</td>
+                                                        <td className="px-10 py-6 font-black text-[#ED1C24]">{Math.floor(m/60)}h {m%60}m</td>
+                                                        <td className="px-10 py-6">
+                                                            <span className={`text-[9px] font-black px-3 py-1 rounded-full ${isExtra ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'}`}>
+                                                                {isExtra ? '✓ TEMPO LIVRE' : '⚠ EXPEDIENTE MAKRO'}
+                                                            </span>
+                                                        </td>
+                                                        <td className="px-10 py-6 text-right">
+                                                            <button onClick={() => deleteLog(log.id)} className="text-gray-600 hover:text-red-500 transition"><Icon name="Trash2" size={16}/></button>
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        )}
+
+                        {view === 'settings' && (
+                            <div className="max-w-2xl mx-auto animate-fade">
+                                <div className="makro-card p-10 space-y-10 border-t-8 border-[#ED1C24]">
+                                    <h2 className="text-2xl font-black text-white uppercase tracking-tight">Definições de Jornada</h2>
+                                    
+                                    <div className="space-y-8">
+                                        <div className="grid grid-cols-2 gap-8">
+                                            <div className="space-y-2">
+                                                <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Entrada Makro</label>
+                                                <input type="time" id="work-start" defaultValue={settings.workStart} className="w-full p-4"/>
+                                            </div>
+                                            <div className="space-y-2">
+                                                <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Saída Makro</label>
+                                                <input type="time" id="work-end" defaultValue={settings.workEnd} className="w-full p-4"/>
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-4">
+                                            <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Dias Úteis</label>
+                                            <div className="flex flex-wrap gap-3">
+                                                {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map((day, i) => (
+                                                    <label key={i} className="flex-1 min-w-[70px] flex flex-col items-center gap-2 bg-white/5 p-4 rounded-2xl cursor-pointer hover:bg-white/10 transition border border-white/5">
+                                                        <input type="checkbox" className="work-day" value={i} defaultChecked={settings.workDays.includes(i)} />
+                                                        <span className="text-[10px] font-bold uppercase">{day}</span>
+                                                    </label>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        <div className="bg-blue-500/5 p-6 rounded-2xl border border-blue-500/10 space-y-2">
+                                            <p className="text-[9px] font-black text-blue-400 uppercase tracking-widest">ID de Nuvem (Sync)</p>
+                                            <code className="text-xs text-gray-500 break-all font-mono select-all">{user?.uid}</code>
+                                        </div>
+
+                                        <button 
+                                            onClick={saveSettings}
+                                            className="btn-makro-primary w-full py-5 rounded-3xl font-black uppercase tracking-widest text-sm shadow-xl"
+                                        >
+                                            Salvar na Cloud
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                    </main>
+
+                    <footer className="p-8 text-center opacity-20 text-[9px] font-black uppercase tracking-[5px]">
+                        Marketing & Performance | Makro Engenharia
+                    </footer>
+                </div>
+            );
         };
 
-        function deleteLog(id) {
-            state.logs = state.logs.filter(l => l.id !== id);
-            saveLogs();
-            renderLogs();
-            updateTotal();
-        }
-
-        function saveLogs() { localStorage.setItem('makro_extra_logs_v2', JSON.stringify(state.logs)); }
-
-        function saveSettings() {
-            state.settings.workStart = document.getElementById('work-start').value;
-            state.settings.workEnd = document.getElementById('work-end').value;
-            state.settings.workDays = Array.from(document.querySelectorAll('.work-day:checked')).map(c => parseInt(c.value));
-            localStorage.setItem('makro_extra_settings_v2', JSON.stringify(state.settings));
-            
-            const msg = document.getElementById('settings-msg');
-            msg.classList.remove('hidden');
-            setTimeout(() => msg.classList.add('hidden'), 2000);
-            checkCurrentWindow();
-            updateTotal();
-        }
-
-        function loadSettingsToUI() {
-            document.getElementById('work-start').value = state.settings.workStart;
-            document.getElementById('work-end').value = state.settings.workEnd;
-            document.querySelectorAll('.work-day').forEach(c => {
-                c.checked = state.settings.workDays.includes(parseInt(c.value));
-            });
-        }
-
-        function switchTab(tabId) {
-            ['dashboard', 'history', 'settings'].forEach(id => {
-                document.getElementById(`tab-${id}`).classList.add('hidden');
-            });
-            document.getElementById(`tab-${tabId}`).classList.remove('hidden');
-        }
-
-        function clearAll() {
-            if(confirm('Atenção: Todos os dados salvos localmente serão perdidos. Confirmar limpeza?')) {
-                state.logs = [];
-                saveLogs();
-                renderLogs();
-                updateTotal();
-            }
-        }
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
     </script>
 </body>
 </html>
