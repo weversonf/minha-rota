@@ -2,266 +2,529 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="theme-color" content="#121212">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Minha Rota v24 - Premium Navigation</title>
-    
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://unpkg.com/tangram/dist/tangram.min.js"></script>
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ExtraHours - Makro Edition</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        :root { 
-            --cor-principal: #FF4757; 
-            --cor-fundo: #0F0F0F; 
-            --cor-card: rgba(25, 25, 25, 0.9);
-            --radius: 20px;
-            --shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
-        }
-
-        body { 
-            margin: 0; padding: 0; 
-            background: var(--cor-fundo); 
-            font-family: 'Inter', -apple-system, sans-serif; 
-            overflow: hidden; 
-            color: #FFFFFF;
-        }
-
-        /* LOGIN */
-        #login-screen { 
-            position: fixed; width: 100%; height: 100%; 
-            background: radial-gradient(circle at center, #1e1e1e 0%, #0f0f0f 100%);
-            z-index: 5000; display: flex; align-items: center; justify-content: center; 
-            transition: 0.5s;
-        }
-        .login-card {
-            background: var(--cor-card); backdrop-filter: blur(15px);
-            padding: 40px; border-radius: var(--radius); text-align: center; width: 80%; max-width: 320px;
-            border: 1px solid rgba(255,255,255,0.1);
-        }
-
-        /* HEADER */
-        #header-app { 
-            position: fixed; top: 0; left: 0; width: 100%; height: 70px; 
-            background: rgba(15, 15, 15, 0.85); backdrop-filter: blur(15px);
-            z-index: 1000; display: none; align-items: center; justify-content: space-between; 
-            padding: 0 20px; box-sizing: border-box; 
-        }
-        #header-app h1 { font-size: 14px; letter-spacing: 2px; text-transform: uppercase; font-weight: 700; color: #fff; }
-
-        /* INPUTS MODERNOS */
-        input, select {
-            width: 100%; padding: 16px; margin-bottom: 12px; 
-            background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 14px; color: white; box-sizing: border-box; outline: none;
-        }
-        input:focus { border-color: var(--cor-principal); }
-
-        /* BUSCA DUPLA (ORIGEM/DESTINO) */
-        #nav-header { 
-            position: fixed; top: 80px; left: 15px; right: 15px; 
-            z-index: 500; display: none; 
-        }
-        .search-container { 
-            background: var(--cor-card); backdrop-filter: blur(15px);
-            border-radius: var(--radius); padding: 15px; box-shadow: var(--shadow);
-            border: 1px solid rgba(255,255,255,0.1);
-        }
-        .search-input { margin-bottom: 8px; font-size: 14px; }
-
-        /* MAPA */
-        #map { position: absolute; top: 0; bottom: 0; width: 100%; z-index: 1; display: none; }
-
-        /* SIDEBAR DRAWER */
-        #sidebar { 
-            position: fixed; top: 0; left: -100%; width: 85%; max-width: 300px; 
-            height: 100%; background: #121212; z-index: 2000; 
-            transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1); 
-            padding: 100px 25px 25px; box-sizing: border-box; 
-        }
-        #sidebar.active { left: 0; }
-
-        /* PAINEL DE RESULTADOS (RODAPÉ) */
-        #route-info {
-            position: fixed; bottom: -100%; left: 15px; right: 15px;
-            background: var(--cor-card); backdrop-filter: blur(15px);
-            border-radius: var(--radius); padding: 20px; z-index: 500;
-            transition: 0.5s; border: 1px solid rgba(255,255,255,0.1);
-            display: flex; justify-content: space-around; text-align: center;
-        }
-        .route-stat { font-weight: 800; font-size: 18px; color: #2ed573; }
-        .route-label { font-size: 10px; color: #888; text-transform: uppercase; }
-
-        .btn-acao { 
-            padding: 18px; border-radius: 14px; border: none; font-weight: 700; 
-            cursor: pointer; transition: 0.2s; text-transform: uppercase;
-        }
-        .btn-principal { background: var(--cor-principal); color: white; width: 100%; }
-        .btn-icon { background: rgba(255,255,255,0.1); border-radius: 50%; width: 45px; height: 45px; color: white; border: none; font-size: 20px; cursor: pointer; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
         
-        .suggestions { background: rgba(20, 20, 20, 0.95); border-radius: 12px; display: none; max-height: 150px; overflow-y: auto; margin-bottom: 10px; }
-        .suggestion-item { padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 13px; }
+        :root {
+            --makro-blue: #003366;
+            --makro-light-blue: #e6f0ff;
+            --nps-green: #10b981;
+            --nps-red: #ef4444;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+            color: #111827;
+        }
+
+        .makro-header {
+            background-color: var(--makro-blue);
+            color: white;
+        }
+
+        .card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            border: 1px solid #e5e7eb;
+        }
+
+        .btn-makro {
+            background-color: var(--makro-blue);
+            color: white;
+            transition: all 0.2s;
+        }
+
+        .btn-makro:hover {
+            background-color: #002244;
+        }
+
+        .btn-stop {
+            background-color: var(--nps-red);
+            color: white;
+        }
+
+        .timer-display {
+            font-variant-numeric: tabular-nums;
+            letter-spacing: -1px;
+        }
+
+        .status-badge {
+            padding: 2px 8px;
+            border-radius: 9999px;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .bg-extra { background-color: #d1fae5; color: #065f46; }
+        .bg-work { background-color: #fee2e2; color: #991b1b; }
+
+        input, select {
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            padding: 10px;
+            font-size: 14px;
+            outline: none;
+        }
+        
+        input:focus {
+            border-color: var(--makro-blue);
+            ring: 1px var(--makro-blue);
+        }
     </style>
 </head>
-<body>
+<body class="min-h-screen">
 
-<div id="login-screen">
-    <div class="login-card">
-        <div style="font-size: 40px; margin-bottom: 10px;">🏍️</div>
-        <h2 style="margin: 0 0 20px 0; font-weight: 800; letter-spacing: 2px;">v24 PREMIUM</h2>
-        <input type="password" id="pass" placeholder="Senha do Grupo">
-        <button onclick="App.entrar()" class="btn-acao btn-principal">ACESSAR</button>
-    </div>
-</div>
+    <!-- Header Estilo Corporativo Makro -->
+    <header class="makro-header shadow-lg mb-8">
+        <div class="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 bg-white rounded flex items-center justify-center">
+                    <span class="text-[#003366] font-bold text-xl">M</span>
+                </div>
+                <h1 class="text-lg font-bold tracking-tight uppercase">ExtraHours <span class="font-light opacity-70">| Personal Tracker</span></h1>
+            </div>
+            <nav class="flex gap-6 text-sm font-medium">
+                <button onclick="switchTab('dashboard')" class="hover:opacity-80 border-b-2 border-transparent hover:border-white py-1">Painel</button>
+                <button onclick="switchTab('history')" class="hover:opacity-80 border-b-2 border-transparent hover:border-white py-1">Registros</button>
+                <button onclick="switchTab('settings')" class="hover:opacity-80 border-b-2 border-transparent hover:border-white py-1">Configurações</button>
+            </nav>
+        </div>
+    </header>
 
-<header id="header-app">
-    <button class="btn-icon" id="menu-btn" onclick="App.toggleMenu()">☰</button>
-    <h1>Minha Rota v24</h1>
-    <button class="btn-icon" onclick="App.sos()" style="background: rgba(255, 71, 87, 0.2); color: var(--cor-principal);">🆘</button>
-</header>
-
-<div id="sidebar">
-    <h2 style="color: var(--cor-principal); margin-bottom: 30px;">Veículo</h2>
-    <label style="color:#666; font-size:10px; font-weight:700;">MONTADORA</label>
-    <select id="sel-montadora" onchange="App.atualizarModelos()">
-        <option value="">Selecione...</option>
-        <option value="yamaha">Yamaha</option>
-        <option value="honda">Honda</option>
-    </select>
-    
-    <label style="color:#666; font-size:10px; font-weight:700;">MODELO</label>
-    <select id="sel-modelo" onchange="App.aplicarConsumo()">
-        <option value="">--</option>
-    </select>
-
-    <label style="color:#666; font-size:10px; font-weight:700;">CONSUMO (km/L)</label>
-    <input type="number" id="consumo" value="29">
-    
-    <button class="btn-acao btn-principal" style="background: #2ed573; margin-top: 20px;" onclick="App.toggleMenu()">SALVAR</button>
-</div>
-
-<div id="nav-header">
-    <div class="search-container">
-        <input type="text" id="input-origem" class="search-input" placeholder="Origem: Minha Localização" oninput="App.buscar(this.value, 'origem')">
-        <div id="sug-origem" class="suggestions"></div>
+    <main class="max-w-6xl mx-auto px-6 pb-12">
         
-        <input type="text" id="input-destino" class="search-input" placeholder="Destino: Para onde?" oninput="App.buscar(this.value, 'destino')">
-        <div id="sug-destino" class="suggestions"></div>
-        
-        <button class="btn-acao btn-principal" style="padding: 12px; font-size: 12px;" onclick="App.calcularRota()">TRAÇAR ROTA</button>
-    </div>
-</div>
-
-<div id="route-info">
-    <div><span id="res-dist" class="route-stat">0</span><br><span class="route-label">Distância (km)</span></div>
-    <div><span id="res-custo" class="route-stat">0</span><br><span class="route-label">Custo Est. (R$)</span></div>
-    <div><button class="btn-acao" style="background: #3498db; color: white; padding: 10px 20px; border-radius: 12px;" onclick="location.reload()">NOVA</button></div>
-</div>
-
-<div id="map"></div>
-
-<script>
-    const VEICULOS = {
-        yamaha: { "Fazer 250 (FZ25)": 29, "MT-03": 22, "Lander 250": 30 },
-        honda: { "CB 300F": 32, "XRE 300": 26, "CG 160": 41 }
-    };
-
-    const App = {
-        map: null,
-        userLoc: [-3.7319, -38.5267],
-        coords: { origem: null, destino: null },
-        routeLayer: null,
-
-        entrar() {
-            if(document.getElementById('pass').value === 'FZ25-FOR') {
-                document.getElementById('login-screen').style.opacity = '0';
-                setTimeout(() => {
-                    document.getElementById('login-screen').style.display = 'none';
-                    document.getElementById('header-app').style.display = 'flex';
-                    document.getElementById('nav-header').style.display = 'block';
-                    document.getElementById('map').style.display = 'block';
-                    this.initMapa();
-                }, 400);
-            }
-        },
-
-        initMapa() {
-            this.map = L.map('map', { zoomControl: false }).setView(this.userLoc, 15);
-            Tangram.leafletLayer({ scene: 'https://www.nextzen.org/carto/cinnabar-style/cinnabar-style.yaml' }).addTo(this.map);
+        <!-- Tab: Dashboard -->
+        <div id="tab-dashboard" class="space-y-6">
             
-            navigator.geolocation.getCurrentPosition(p => {
-                this.userLoc = [p.coords.latitude, p.coords.longitude];
-                this.coords.origem = this.userLoc;
-                this.map.setView(this.userLoc, 16);
-                L.circleMarker(this.userLoc, { radius: 7, color: '#fff', weight: 2, fillColor: '#FF4757', fillOpacity: 1 }).addTo(this.map);
-            });
-        },
-
-        atualizarModelos() {
-            const m = document.getElementById('sel-montadora').value;
-            const s = document.getElementById('sel-modelo');
-            s.innerHTML = '<option value="">Escolha...</option>';
-            if(m) Object.keys(VEICULOS[m]).forEach(mod => s.innerHTML += `<option value="${VEICULOS[m][mod]}">${mod}</option>`);
-        },
-
-        aplicarConsumo() { document.getElementById('consumo').value = document.getElementById('sel-modelo').value; },
-
-        toggleMenu() { 
-            const s = document.getElementById('sidebar');
-            const b = document.getElementById('menu-btn');
-            s.classList.toggle('active');
-            b.innerText = s.classList.contains('active') ? '✕' : '☰';
-        },
-
-        async buscar(query, tipo) {
-            if (query.length < 3) return;
-            const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${query}, Fortaleza&limit=4`);
-            const data = await res.json();
-            const container = document.getElementById('sug-' + tipo);
-            container.innerHTML = '';
-            container.style.display = data.length ? 'block' : 'none';
-            
-            data.forEach(item => {
-                const div = document.createElement('div');
-                div.className = 'suggestion-item';
-                div.innerText = item.display_name.split(',')[0];
-                div.onclick = () => {
-                    this.coords[tipo] = [parseFloat(item.lat), parseFloat(item.lon)];
-                    document.getElementById('input-' + tipo).value = item.display_name.split(',')[0];
-                    container.style.display = 'none';
-                };
-                container.appendChild(div);
-            });
-        },
-
-        async calcularRota() {
-            if(!this.coords.origem || !this.coords.destino) return alert("Defina origem e destino!");
-            
-            const url = `https://router.project-osrm.org/route/v1/driving/${this.coords.origem[1]},${this.coords.origem[0]};${this.coords.destino[1]},${this.coords.destino[0]}?overview=full&geometries=geojson`;
-            const res = await fetch(url);
-            const data = await res.json();
-            
-            if(data.routes && data.routes[0]) {
-                const route = data.routes[0];
-                if(this.routeLayer) this.map.removeLayer(this.routeLayer);
+            <!-- Cronômetro e Info Rápida -->
+            <div class="grid md:grid-cols-4 gap-6">
                 
-                this.routeLayer = L.geoJSON(route.geometry, { style: { color: '#FF4757', weight: 6, opacity: 0.8 } }).addTo(this.map);
-                this.map.fitBounds(this.routeLayer.getBounds(), { padding: [50, 50] });
+                <!-- Cronômetro com Opção de Início Retroativo -->
+                <div class="card p-6 md:col-span-2 flex flex-col justify-between">
+                    <div>
+                        <div class="flex justify-between items-start mb-4">
+                            <h2 class="text-xs font-bold text-gray-500 uppercase tracking-widest text-wrap">Acompanhamento em Tempo Real</h2>
+                            <div id="timer-status" class="hidden flex items-center gap-2 text-green-500 font-bold text-[10px] uppercase animate-pulse">
+                                <span class="w-2 h-2 bg-green-500 rounded-full"></span> Ativo
+                            </div>
+                        </div>
+                        <div class="flex items-baseline gap-4 mb-6">
+                            <span id="timer-display" class="timer-display text-6xl font-bold text-gray-800">00:00:00</span>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <div class="flex flex-col gap-1">
+                                <label class="text-[10px] font-bold text-gray-400 uppercase">Descrição da Atividade</label>
+                                <input type="text" id="timer-title" placeholder="Ex: Viagem Fazer 250">
+                            </div>
+                            <div class="flex flex-col gap-1" id="timer-start-container">
+                                <label class="text-[10px] font-bold text-gray-400 uppercase">Horário de Início</label>
+                                <input type="datetime-local" id="timer-start-input">
+                            </div>
+                        </div>
+                        <button id="btn-timer-action" onclick="toggleTimer()" class="btn-makro w-full py-3 rounded-md font-bold uppercase text-xs tracking-widest shadow-md">Iniciar Atividade</button>
+                    </div>
+                </div>
 
-                const dist = (route.distance / 1000).toFixed(1);
-                const custo = (dist / document.getElementById('consumo').value * 6.15).toFixed(2);
+                <!-- KPI: Total Extra -->
+                <div class="card p-6 flex flex-col justify-center items-center">
+                    <h2 class="text-xs font-bold text-gray-500 uppercase mb-2 tracking-widest">Tempo Extra (Mês)</h2>
+                    <span id="total-hours" class="text-4xl font-bold text-[#003366]">00:00</span>
+                    <p class="text-[10px] text-gray-400 mt-2 uppercase text-center">Horas acumuladas fora do expediente Makro</p>
+                </div>
 
-                document.getElementById('res-dist').innerText = dist;
-                document.getElementById('res-custo').innerText = custo;
-                document.getElementById('route-info').style.bottom = '20px';
-                document.getElementById('nav-header').style.display = 'none';
+                <!-- KPI: Janela Atual -->
+                <div class="card p-6 flex flex-col justify-center items-center">
+                    <h2 class="text-xs font-bold text-gray-500 uppercase mb-2 tracking-widest">Status da Janela</h2>
+                    <div id="window-status" class="text-sm font-bold px-4 py-2 rounded-lg">
+                        Sincronizando...
+                    </div>
+                    <p class="text-[10px] text-gray-400 mt-2 uppercase" id="current-time-info"></p>
+                </div>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-6">
+                <!-- Registro Manual de Atividades Passadas -->
+                <div class="card p-6">
+                    <h2 class="text-xs font-bold text-gray-500 uppercase mb-4 tracking-widest">Lançamento Retroativo</h2>
+                    <form id="manual-form" class="space-y-4">
+                        <div class="flex flex-col gap-1">
+                            <label class="text-[10px] font-bold text-gray-400 uppercase">Título</label>
+                            <input type="text" id="m-title" placeholder="Ex: Estudo de Marketing" required>
+                        </div>
+                        <div class="grid grid-cols-1 gap-2">
+                            <div class="flex flex-col gap-1">
+                                <label class="text-[10px] font-bold text-gray-400 uppercase">Data/Hora Início</label>
+                                <input type="datetime-local" id="m-start" required>
+                            </div>
+                            <div class="flex flex-col gap-1">
+                                <label class="text-[10px] font-bold text-gray-400 uppercase">Data/Hora Fim</label>
+                                <input type="datetime-local" id="m-end" required>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn-makro w-full py-3 rounded font-bold text-xs uppercase tracking-widest">Salvar no Histórico</button>
+                    </form>
+                </div>
+
+                <!-- Lista Recente -->
+                <div class="card p-6 md:col-span-2">
+                    <h2 class="text-xs font-bold text-gray-500 uppercase mb-4 tracking-widest">Últimas Atividades</h2>
+                    <div id="recent-list" class="space-y-2">
+                        <!-- Conteúdo via JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab: History -->
+        <div id="tab-history" class="hidden">
+            <div class="card overflow-hidden">
+                <div class="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                    <h2 class="font-bold text-gray-700 uppercase text-sm tracking-widest">Log Geral de Horas</h2>
+                    <button onclick="clearAll()" class="text-xs text-red-500 font-bold hover:underline">LIMPAR BASE DE DADOS</button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead class="bg-gray-50 text-[10px] uppercase text-gray-400 font-bold">
+                            <tr>
+                                <th class="px-6 py-4">Início</th>
+                                <th class="px-6 py-4">Atividade</th>
+                                <th class="px-6 py-4">Duração</th>
+                                <th class="px-6 py-4">Classificação</th>
+                                <th class="px-6 py-4 text-right">Ação</th>
+                            </tr>
+                        </thead>
+                        <tbody id="full-history-table" class="text-sm divide-y divide-gray-100">
+                            <!-- Conteúdo via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab: Settings -->
+        <div id="tab-settings" class="hidden">
+            <div class="card p-8 max-w-2xl mx-auto">
+                <h2 class="text-lg font-bold mb-6 text-[#003366]">Configurações de Jornada Makro</h2>
+                <div class="space-y-6">
+                    <div class="grid grid-cols-2 gap-6">
+                        <div class="flex flex-col gap-2">
+                            <label class="text-xs font-bold text-gray-500 uppercase">Entrada no Trabalho</label>
+                            <input type="time" id="work-start" value="08:00">
+                        </div>
+                        <div class="flex flex-col gap-2">
+                            <label class="text-xs font-bold text-gray-500 uppercase">Saída do Trabalho</label>
+                            <input type="time" id="work-end" value="18:00">
+                        </div>
+                    </div>
+                    
+                    <div class="flex flex-col gap-3">
+                        <label class="text-xs font-bold text-gray-500 uppercase">Dias de Expediente</label>
+                        <div class="flex flex-wrap gap-4">
+                            <label class="flex items-center gap-2 text-sm cursor-pointer"><input type="checkbox" class="work-day" value="1" checked> Seg</label>
+                            <label class="flex items-center gap-2 text-sm cursor-pointer"><input type="checkbox" class="work-day" value="2" checked> Ter</label>
+                            <label class="flex items-center gap-2 text-sm cursor-pointer"><input type="checkbox" class="work-day" value="3" checked> Qua</label>
+                            <label class="flex items-center gap-2 text-sm cursor-pointer"><input type="checkbox" class="work-day" value="4" checked> Qui</label>
+                            <label class="flex items-center gap-2 text-sm cursor-pointer"><input type="checkbox" class="work-day" value="5" checked> Sex</label>
+                            <label class="flex items-center gap-2 text-sm cursor-pointer"><input type="checkbox" class="work-day" value="6"> Sáb</label>
+                            <label class="flex items-center gap-2 text-sm cursor-pointer"><input type="checkbox" class="work-day" value="0"> Dom</label>
+                        </div>
+                    </div>
+                    
+                    <button onclick="saveSettings()" class="btn-makro w-full py-4 rounded font-bold uppercase tracking-widest shadow-md">Salvar Definições</button>
+                    <p id="settings-msg" class="text-center text-xs text-green-600 font-bold hidden">Configurações atualizadas com sucesso.</p>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        // --- State Management ---
+        let state = {
+            logs: JSON.parse(localStorage.getItem('makro_extra_logs_v2')) || [],
+            settings: JSON.parse(localStorage.getItem('makro_extra_settings_v2')) || {
+                workStart: "08:00",
+                workEnd: "18:00",
+                workDays: [1, 2, 3, 4, 5]
+            },
+            timer: {
+                running: false,
+                startTime: null,
+                intervalId: null
             }
-        },
+        };
 
-        sos() { window.open(`https://wa.me/?text=Emergência! Localização: http://maps.google.com/maps?q=${this.userLoc[0]},${this.userLoc[1]}`); }
-    };
-</script>
+        // --- Initialization ---
+        window.onload = () => {
+            loadSettingsToUI();
+            renderLogs();
+            updateTotal();
+            checkCurrentWindow();
+            resetTimerInput();
+            setInterval(checkCurrentWindow, 60000);
+            
+            // Setup manual form default dates
+            const now = new Date();
+            document.getElementById('m-start').value = new Date(now.getTime() - 3600000).toISOString().slice(0, 16);
+            document.getElementById('m-end').value = now.toISOString().slice(0, 16);
+        };
+
+        function resetTimerInput() {
+            if (!state.timer.running) {
+                const now = new Date();
+                // Ajusta para o fuso horário local no formato datetime-local
+                const tzOffset = now.getTimezoneOffset() * 60000;
+                const localISODate = new Date(now.getTime() - tzOffset).toISOString().slice(0, 16);
+                document.getElementById('timer-start-input').value = localISODate;
+            }
+        }
+
+        // --- Timer Logic ---
+        function toggleTimer() {
+            const btn = document.getElementById('btn-timer-action');
+            const titleInput = document.getElementById('timer-title');
+            const startInput = document.getElementById('timer-start-input');
+            const statusIndicator = document.getElementById('timer-status');
+
+            if (!state.timer.running) {
+                // START
+                const customStartTime = new Date(startInput.value).getTime();
+                
+                // Validação básica
+                if (isNaN(customStartTime)) {
+                    alert("Por favor, insira uma data de início válida.");
+                    return;
+                }
+
+                state.timer.running = true;
+                state.timer.startTime = customStartTime;
+                
+                btn.innerText = "Parar e Salvar";
+                btn.classList.add('btn-stop');
+                statusIndicator.classList.remove('hidden');
+                startInput.disabled = true;
+                
+                // Update display immediately then every second
+                updateTimerDisplay();
+                state.timer.intervalId = setInterval(updateTimerDisplay, 1000);
+            } else {
+                // STOP
+                clearInterval(state.timer.intervalId);
+                const endTime = Date.now();
+                
+                const newLog = {
+                    id: Date.now(),
+                    title: titleInput.value || "Atividade Sem Nome",
+                    start: new Date(state.timer.startTime).toISOString(),
+                    end: new Date(endTime).toISOString()
+                };
+
+                state.logs.unshift(newLog);
+                saveLogs();
+                renderLogs();
+                updateTotal();
+
+                // Reset UI State
+                state.timer.running = false;
+                state.timer.startTime = null;
+                btn.innerText = "Iniciar Atividade";
+                btn.classList.remove('btn-stop');
+                statusIndicator.classList.add('hidden');
+                document.getElementById('timer-display').innerText = "00:00:00";
+                titleInput.value = "";
+                startInput.disabled = false;
+                resetTimerInput();
+            }
+        }
+
+        function updateTimerDisplay() {
+            const now = Date.now();
+            let diff = now - state.timer.startTime;
+            
+            // Caso o início seja no futuro (por erro do usuário), trava em zero
+            if (diff < 0) diff = 0;
+            
+            const hours = Math.floor(diff / 3600000);
+            const minutes = Math.floor((diff % 3600000) / 60000);
+            const seconds = Math.floor((diff % 60000) / 1000);
+
+            document.getElementById('timer-display').innerText = 
+                `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        }
+
+        // --- Core Helpers ---
+        function isExtraTime(dateStr) {
+            const date = new Date(dateStr);
+            const day = date.getDay();
+            const time = date.getHours() * 60 + date.getMinutes();
+            
+            const [sh, sm] = state.settings.workStart.split(':').map(Number);
+            const [eh, em] = state.settings.workEnd.split(':').map(Number);
+            
+            const workStartTotal = sh * 60 + sm;
+            const workEndTotal = eh * 60 + em;
+
+            if (!state.settings.workDays.includes(day)) return true;
+            if (time < workStartTotal || time >= workEndTotal) return true;
+            return false;
+        }
+
+        function checkCurrentWindow() {
+            const now = new Date();
+            const extra = isExtraTime(now.toISOString());
+            const statusEl = document.getElementById('window-status');
+            const timeInfo = document.getElementById('current-time-info');
+
+            if (extra) {
+                statusEl.innerText = "FORA DO EXPEDIENTE";
+                statusEl.className = "text-sm font-bold px-4 py-2 rounded-lg bg-green-100 text-green-700";
+            } else {
+                statusEl.innerText = "HORÁRIO COMERCIAL";
+                statusEl.className = "text-sm font-bold px-4 py-2 rounded-lg bg-red-100 text-red-700";
+            }
+            timeInfo.innerText = now.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
+        }
+
+        // --- UI Rendering ---
+        function renderLogs() {
+            const recentList = document.getElementById('recent-list');
+            const historyTable = document.getElementById('full-history-table');
+
+            if (state.logs.length === 0) {
+                recentList.innerHTML = `<p class="text-xs text-gray-400 italic py-4">Nenhum registro encontrado no banco de dados.</p>`;
+                historyTable.innerHTML = `<tr><td colspan="5" class="px-6 py-10 text-center text-gray-400 italic">Histórico de logs vazio.</td></tr>`;
+                return;
+            }
+
+            // Dashboard View
+            recentList.innerHTML = state.logs.slice(0, 4).map(log => {
+                const diff = new Date(log.end) - new Date(log.start);
+                const m = Math.max(0, Math.floor(diff / 60000));
+                const extra = isExtraTime(log.start);
+                return `
+                    <div class="flex justify-between items-center p-3 border border-gray-100 rounded hover:bg-gray-50 transition">
+                        <div>
+                            <span class="text-xs font-bold text-gray-800">${log.title}</span>
+                            <div class="flex items-center gap-2 mt-1">
+                                <span class="status-badge ${extra ? 'bg-extra' : 'bg-work'}">${extra ? 'Extra' : 'Expediente'}</span>
+                                <span class="text-[10px] text-gray-400">${new Date(log.start).toLocaleDateString()}</span>
+                            </div>
+                        </div>
+                        <span class="font-mono text-sm font-bold text-gray-600">${Math.floor(m/60)}h ${m%60}m</span>
+                    </div>
+                `;
+            }).join('');
+
+            // Full History Table
+            historyTable.innerHTML = state.logs.map(log => {
+                const diff = new Date(log.end) - new Date(log.start);
+                const m = Math.max(0, Math.floor(diff / 60000));
+                const extra = isExtraTime(log.start);
+                return `
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 text-gray-500 text-xs">${new Date(log.start).toLocaleString()}</td>
+                        <td class="px-6 py-4 font-semibold">${log.title}</td>
+                        <td class="px-6 py-4 font-mono">${Math.floor(m/60)}h ${m%60}m</td>
+                        <td class="px-6 py-4">
+                            <span class="status-badge ${extra ? 'bg-extra' : 'bg-work'}">${extra ? '✓ Atividade Pessoal' : '⚠ Horário Makro'}</span>
+                        </td>
+                        <td class="px-6 py-4 text-right">
+                            <button onclick="deleteLog(${log.id})" class="text-red-400 hover:text-red-600 font-bold text-xs">REMOVER</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function updateTotal() {
+            let totalMins = 0;
+            const now = new Date();
+            const currM = now.getMonth();
+            const currY = now.getFullYear();
+
+            state.logs.forEach(log => {
+                const logDate = new Date(log.start);
+                if (logDate.getMonth() === currM && logDate.getFullYear() === currY && isExtraTime(log.start)) {
+                    const dur = (new Date(log.end) - new Date(log.start)) / 60000;
+                    totalMins += Math.max(0, dur);
+                }
+            });
+
+            const h = Math.floor(totalMins / 60);
+            const m = Math.floor(totalMins % 60);
+            document.getElementById('total-hours').innerText = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+        }
+
+        // --- Event Handlers & Persistent Storage ---
+        document.getElementById('manual-form').onsubmit = (e) => {
+            e.preventDefault();
+            const log = {
+                id: Date.now(),
+                title: document.getElementById('m-title').value,
+                start: document.getElementById('m-start').value,
+                end: document.getElementById('m-end').value
+            };
+            state.logs.unshift(log);
+            saveLogs();
+            renderLogs();
+            updateTotal();
+            e.target.reset();
+        };
+
+        function deleteLog(id) {
+            state.logs = state.logs.filter(l => l.id !== id);
+            saveLogs();
+            renderLogs();
+            updateTotal();
+        }
+
+        function saveLogs() { localStorage.setItem('makro_extra_logs_v2', JSON.stringify(state.logs)); }
+
+        function saveSettings() {
+            state.settings.workStart = document.getElementById('work-start').value;
+            state.settings.workEnd = document.getElementById('work-end').value;
+            state.settings.workDays = Array.from(document.querySelectorAll('.work-day:checked')).map(c => parseInt(c.value));
+            localStorage.setItem('makro_extra_settings_v2', JSON.stringify(state.settings));
+            
+            const msg = document.getElementById('settings-msg');
+            msg.classList.remove('hidden');
+            setTimeout(() => msg.classList.add('hidden'), 2000);
+            checkCurrentWindow();
+            updateTotal();
+        }
+
+        function loadSettingsToUI() {
+            document.getElementById('work-start').value = state.settings.workStart;
+            document.getElementById('work-end').value = state.settings.workEnd;
+            document.querySelectorAll('.work-day').forEach(c => {
+                c.checked = state.settings.workDays.includes(parseInt(c.value));
+            });
+        }
+
+        function switchTab(tabId) {
+            ['dashboard', 'history', 'settings'].forEach(id => {
+                document.getElementById(`tab-${id}`).classList.add('hidden');
+            });
+            document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+        }
+
+        function clearAll() {
+            if(confirm('Atenção: Todos os dados salvos localmente serão perdidos. Confirmar limpeza?')) {
+                state.logs = [];
+                saveLogs();
+                renderLogs();
+                updateTotal();
+            }
+        }
+    </script>
 </body>
 </html>
